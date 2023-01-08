@@ -1,0 +1,654 @@
+<!DOCTYPE HTML><html lang="ja"><head><meta charset="utf-8"><meta content="Tosainu" name="author"><meta content="とさいぬのブログです" name="description"><meta content="Hakyll" name="generator"><meta content="width=device-width, initial-scale=1" name="viewport"><meta name="robots" content="noindex"><meta property="twitter:card" content="summary"><meta property="twitter:site" content="myon___"><meta property="twitter:creator" content="myon___"><meta property="og:type" content="article"><meta property="og:url" content="https://blog.myon.info/entry/2013/03/page/3/index.html"><meta property="og:title" content="Monthly archives: 2013/03 | Tosainu Lab"><meta property="og:description" content="とさいぬのブログです"><meta property="og:site_name" content="Tosainu Lab"><meta property="og:image" content="https://blog.myon.info/images/icon/cocoa-512.jpg"><title>Monthly archives: 2013/03 | Tosainu Lab</title><link href="/vendor/normalize.css/normalize.css" rel="stylesheet"><link href="/stylesheets/style.css" rel="stylesheet"><link href="/stylesheets/highlight.css" rel="stylesheet"><link href="/vendor/fontawesome/style.css" rel="stylesheet"><link href="/vendor/katex/katex.min.css" rel="stylesheet"><link href="/feed.xml" title="Atom Feed" type="application/atom+xml" rel="alternate"><script async src="https://www.googletagmanager.com/gtag/js?id=G-X1CGBSMEQW"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-X1CGBSMEQW');</script></head><body><header class="site-header"><div class="container"><h1><a href="/" title="home">Tosainu Lab</a></h1></div></header><main class="list"><aside class="filter"><div class="container"><span>Monthly archives: 2013/03</span></div></aside><div class="container"><div class="items"><article><header class="post-header"><h1><a href="/entry/2013/03/22/entry/">PCの世界から日本語（2byte文字）は追放するべきだと思うんだ</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2013/03/22 19:47</li><li><svg class="svg-inline--fa fa-tags" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg></li><li><ul class="tag-list"><li><a href="/entry/tags/linux/"><span>Linux</span></a></li></ul></li></ul></header><div class="post-contents"><p>
+どーもです
+</p>
+<p>
+ 
+</p>
+<p>
+<a href="https://www.archlinux.org/" target="_blank" rel="nofollow noopener">Arch Linux</a>っていうLinuxディストリがあるんだけど、
+</p>
+<p>
+こいつが本当に優秀すぐる。
+</p>
+<p>
+とさいぬは既にメイン機、B75サブ機、薄いDynabookにはインストール済みで、
+</p>
+<p>
+VAIO Zも近いうちに導入しようと検討しているくらい。
+</p>
+<p>
+ 
+</p>
+<p>
+Archたん可愛いよArch
+</p>
+<p>
+ 
+</p>
+<p>
+ 
+</p>
+<p>
+とさいぬはFedora、Ubuntu、Linux Mint、openSUSE、Gentoo,Arch Linux、CentOS、Debian等々、
+</p>
+<p>
+様々なLinuxディストリに触れてきましたし、GomindowsやMacのようなものも一応使ったことはあるんですが、
+</p>
+<p>
+<span style="font-size:24px;">日本語が邪魔</span>
+</p>
+<p>
+って毎回思うんです。（僕だけ・・・？）
+</p>
+<p>
+ 
+</p>
+<p>
+そりゃ日本語が嫌って言ってるから他の言語ペラペラのスラスラなんだろ？
+</p>
+<p>
+なんて言われてもNoですが。
+</p>
+<p>
+ 
+</p>
+<p>
+ 
+</p>
+<p>
+自分のホームディレクトリからドキュメントフォルダに移動するとき、
+</p>
+<p>
+$ cd ドキュメント
+</p>
+<p>
+なんて打つのは面倒でしょ？
+</p>
+<p>
+ 
+</p>
+<p>
+初期状態で英字フォントは入っていても、必ず日本語フォントが入っているとは限らないでしょ？
+</p>
+<p>
+ 
+</p>
+<p>
+種類の多い文字コードが原因でしょっちゅう文字化け起こすでしょ？
+</p>
+<p>
+ 
+</p>
+<p>
+もう書き上げたら本ができちゃいそうです。
+</p>
+<p>
+ 
+</p>
+<p>
+家族が使うものは除き、僕は使っているPC,携帯、カメラ等、
+</p>
+<p>
+すべて表示言語を英語にしています。
+</p>
+<p>
+それくらいPC内の日本語が嫌です。
+</p>
+<p>
+ 
+</p>
+<p>
+あー・・・
+</p>
+<p>
+最初から英語を勉強しておけばな・・・
+</p>
+<p>
+こんなに海外のWikiやフォーラム読むのに苦労しなくて済んだのだろうな・・・
+</p>
+<p>
+ 
+</p>
+<p>
+ 
+</p>
+<p>
+そして今B75サブ機のArch上のChromeから記事書いてるんだけど、
+</p>
+<p>
+繋いでいるキーボードが日本語なのに、一部を英字配列と認識しているようだ・・・
+</p>
+<p>
+打ちにくい
+</p>
+<p>
+ 
+</p>
+<p>
+もうひとつHHKB（英字配列）買おうかな・・・
+</p></div></article><article><header class="post-header"><h1><a href="/entry/2013/03/21/entry/">動画を作ったんだ、うん</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2013/03/21 09:53</li></ul></header><div class="post-contents"><iframe width="312" height="176" src="http://ext.nicovideo.jp/thumb/sm20384482" scrolling="no" style="border:solid 1px #CCC;" frameborder="0">
+<a href="http://www.nicovideo.jp/watch/sm20384482" target="_blank" rel="nofollow noopener">【ニコニコ動画】CPUソケットを吹っ切らせたかった</a>
+</iframe>
+<p>
+ 
+</p>
+<div class="video-container">
+<script type="text/javascript" src="http://ext.nicovideo.jp/thumb_watch/sm20384482?w=490&amp;h=307"></script>
+<noscript>
+<a href="http://www.nicovideo.jp/watch/sm20384482" target="_blank" rel="nofollow noopener">【ニコニコ動画】CPUソケットを吹っ切らせたかった</a>
+</noscript>
+</div>
+<p>
+ 
+</p>
+<p>
+うん、何がしたかったんだろうね。
+</p>
+<p>
+ 
+</p>
+<p>
+そして、うｐ早々
+</p>
+<p>
+<img src="https://lh5.googleusercontent.com/-xwYy-MStC6Y/UUpZw5jzC8I/AAAAAAAABxI/uVdTR__RKrU/s800/nico.png" height="140" width="400" />
+</p>
+<p>
+このタグ付いちゃったよww
+</p>
+<p>
+ 
+</p>
+<p>
+ 
+</p>
+<p>
+ちょっと前までまとめて動画あげてる人がいたんだけどなぁ・・・
+</p></div></article><article><header class="post-header"><h1><a href="/entry/2013/03/20/entry/">HDDを修理した</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2013/03/20 09:20</li></ul></header><div class="post-contents"><p>
+<img src="https://lh4.googleusercontent.com/-IxDpQsFXvmc/UUj8NapegNI/AAAAAAAABv8/vAkAUQn0A_I/s640/IMG_0280.JPG" />
+</p>
+<p>
+随分前から預っていたのですが、SATAコネクタ部分が破損したHDDを昨夜から修理してました。
+</p>
+<p>
+無事修理できたようなので、その報告的なもの。
+</p>
+<p>
+ 
+</p>
+<p>
+まず、ドナーとなるSATAコネクタを取り出します。
+</p>
+<p>
+今回は光学ドライブと思われる基板を使いました。
+</p>
+<p>
+<img src="https://lh3.googleusercontent.com/-PuJr2ZmpRLk/UUj8Ko6Eq6I/AAAAAAAABvs/uXg5kh7ej3E/s640/IMG_0281.JPG" />
+</p>
+<p>
+ 
+</p>
+<p>
+<span style="font-size:36px;">破壊♪</span>
+</p>
+<p>
+<img src="https://lh5.googleusercontent.com/-pG1W7j9Ih5A/UUj8Lqgi9bI/AAAAAAAABv0/CkDyi62G2xU/s640/IMG_0282.JPG" />
+</p>
+<p>
+<img src="https://lh6.googleusercontent.com/-bxwZkVQ4q78/UUj8ocLEVNI/AAAAAAAABwY/mnm2s2GaaIw/s640/IMG_0283.JPG" />
+</p>
+<p>
+<img src="https://lh3.googleusercontent.com/-64s70m4u_Q8/UUj8jYGVUzI/AAAAAAAABwM/SB_xQpAyXzQ/s640/IMG_0287.JPG" />
+</p>
+<p>
+ 
+</p>
+<p>
+後で固定しやすいように、またある程度強度を持たせるため、周りの凸凹は残しておきます。
+</p>
+<p>
+ 
+</p>
+<p>
+次はHDDを加工します。
+</p>
+<p>
+問題のSATAコネクタの部分を
+</p>
+<p>
+<span style="font-size:36px;">破壊♪</span>
+</p>
+<p>
+<img src="https://lh6.googleusercontent.com/-77eUg6F6LSk/UUj8-zcm2vI/AAAAAAAABwo/P9vrsoIm2Q4/s640/IMG_0293.JPG" />
+</p>
+<p>
+ 
+</p>
+<p>
+<img src="https://lh4.googleusercontent.com/-wClGOSp3ESM/UUj81i21lrI/AAAAAAAABwg/6_uzkB4BjX0/s640/IMG_0292.JPG" />
+</p>
+<p>
+先程取り出したコネクタの端子を爪付きのSATAケーブルに差し、HDDに位置を合わせながら固定し、ハンダ付け。
+</p>
+<p>
+あとは、取り付けた端子の周りを接着剤で固定し完成です。
+</p>
+<p>
+ 
+</p>
+<p>
+<img src="https://lh4.googleusercontent.com/-A3ZyM7blxxA/UUj9IWC-wUI/AAAAAAAABw4/KydfUR_fivQ/s640/IMG_0295.JPG" />
+</p>
+<p>
+現在、自作機2号で物理フォーマット中です。
+</p>
+<p>
+何の問題もなく読み書きできているようなので成功でしょう。
+</p></div></article><article><header class="post-header"><h1><a href="/entry/2013/03/19/entry/">GTX 660TiのBIOSを弄る（MaxTDP・FanSpeed・BoostClock・VoltageLimit）</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2013/03/19 14:07</li><li><svg class="svg-inline--fa fa-tags" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg></li><li><ul class="tag-list"><li><a href="/entry/tags/diy-pc/"><span>DIY PC</span></a></li></ul></li></ul></header><div class="post-contents"><p>
+どーもです
+</p>
+<p>
+ 
+</p>
+<p>
+タイトル通りです。
+</p>
+<p>
+なんか危険なことに手を出してる気がしますが、
+</p>
+<p>
+<span style="font-size:36px;">660TiのBIOS弄りました</span>
+</p>
+<p>
+ 
+</p>
+<p>
+でまぁ、何がどうなったかというと、
+</p>
+<ul>
+<li>
+Max FanSpeed：80%→100%
+</li>
+<li>
+Max Power Limit：125%？→150%
+</li>
+<li>
+Max BoostClock：1085MHz→1228MHz
+</li>
+<li>
+Max CoreVoltage：1.1750V→1.212V（GPU-Z読み）
+</li>
+</ul>
+<p>
+<img src="https://lh3.googleusercontent.com/-qwopLgi5ZXU/UUfkJzKky7I/AAAAAAAABu8/uesBanERH-U/s800/unlock%2521%2521%2521%2521%2521%2521.png" height="485" width="393" />
+</p>
+<p>
+ 
+</p>
+<p>
+これで念願のCoreClock約1230MHz達成です。
+</p>
+<p>
+ 
+</p>
+<p>
+一応方法を書いておこうと思いますが、
+</p>
+<p>
+<span style="color:red;">失敗した場合グラボはファンのついた文鎮になるので注意です。</span>
+</p>
+<p>
+また、
+</p>
+<p>
+<span style="color:red;">この方法が使えるのはNvidiaのkeplerアーキテクチャのグラボのみです。</span>
+</p>
+<p>
+ 
+</p>
+<p>
+参考にしたサイト
+</p>
+<p>
+<a href="http://www.overclock.net/t/1302409/official-nvidia-gtx-660ti-owners-club/1280#post_19314756" target="_blank" rel="nofollow noopener">[Official] NVIDIA GTX 660TI Owners club</a>
+</p>
+<p>
+ 
+</p>
+<h3>
+用意するもの
+</h3>
+<ul>
+<li>
+弄りたいグラボを載せたWindowsマシン
+</li>
+<li>
+<a href="http://www.techpowerup.com/gpuz/" target="_blank" rel="nofollow noopener">TechPowerUP GPU-Z</a>
+</li>
+<li>
+<a href="http://dl.dropbox.com/u/55743933/kgb_0.6.1.zip" target="_blank" rel="nofollow noopener">Kepler BIOS Editor</a>
+</li>
+<li>
+<a href="http://www.techpowerup.com/downloads/2133/NVFlash_5.118_for_Windows.html" target="_blank" rel="nofollow noopener">NVFlash For Windows</a>
+</li>
+</ul>
+<p>
+ 
+</p>
+<h3>
+1.改造前のBIOSを抜き出す
+</h3>
+<p>
+TechPowerUP GPU-Zを起動します。
+</p>
+<p>
+画像の<strong><span style="color:red;">□</span></strong>をクリックすると、BIOSが抜き出せます。適当なところに保存してください。
+</p>
+<p>
+<img src="https://lh5.googleusercontent.com/-uiezirPUb0U/UUfx5CFdpYI/AAAAAAAABvM/7eoKfU9IoSw/s800/nyan.png" height="485" width="393" />
+</p>
+<p>
+<span style="color:red;">もしものためにBIOSにはバックアップを作っておいてください。</span>
+</p>
+<p>
+ 
+</p>
+<h3>
+2.BIOSのファイルを加工する
+</h3>
+<p>
+Kepler BIOS Editorの圧縮ファイルを展開し、kgb.exeがあるディレクトリに先程抜き出したBIOSファイルをコピーします。
+</p>
+<p>
+kgb.cfgをメモ帳等で開き、パラメーターを設定します。
+</p>
+<pre class="prettyprint linenums">
+# EXPERIMENTAL: This Setting makes the checksum calculate to 
+# the same value it originally was by manipulating an unused 
+# section of the bois. This may be needed for the new style
+# UEFI vbios. Set this to 1 if you want to preserve the orig
+# checksum. Set to 0 for the previous behavior of re-calculating
+# the checksum. NOTE: if you&#39;re not having driver detection 
+# problems leave this at 0.
+#
+Preserve_Original_Checksum = 0
+
+
+# Fan settings
+# ファン回転数設定（%）
+# 上が最少値、下が最大値
+Fan_Min = 30
+Fan_Max = 100
+
+
+# Board power settings
+# Board power最大設定（%）
+Max_Power_Target = 150
+
+
+# Max Boost Frequency. Uncomment this if you want to change the
+# maximum frequency your card will boost to.
+# BoostClockの最大値設定（MHz）
+Max_Boost_Freq = 1228 ←必ず#を外す（そうしないと、僕の環境では1298MHzが設定されました）
+
+
+# WARNNING:
+# The following are valid voltages. I suggest you 
+# use these values rather than coming up with your 
+# own. 1212500 is the max and it is normally hard limited. 
+# If you go over the max and your board is hard limited
+# you may actually get a much lower voltage than you
+# expect.
+# 電圧設定
+# 希望の値の行の#を外す
+Voltage = 1187500（1.1875V）
+</pre>
+<p>
+ 
+</p>
+<p>
+コマンドプロンプトを開き、
+</p>
+<p>
+cd kgb.exeがあるディレクトリのフルパス
+</p>
+<p>
+kgb.exeがあるところがCドライブ以外の時（下の例はDドライブの時）はさらに、
+</p>
+<p>
+D:
+</p>
+<p>
+と打ちます。そうしたら、
+</p>
+<p>
+kgb.exe BIOSのファイル名 unlock
+</p>
+<p>
+と打つと、先程同じディレクトリにコピーしたBIOSが、値の書き換えられたものに上書きされます。
+</p>
+<p>
+ 
+</p>
+<h3>
+BIOSをグラボに書き込む
+</h3>
+<p>
+NVFlashの圧縮ファイルを展開し、nvflash.exeがあるディレクトリに先程加工したBIOSをコピーします。
+</p>
+<p>
+コマンドプロンプトを開き、
+</p>
+<p>
+cd nvflash.exeがあるディレクトリのフルパス
+</p>
+<p>
+nvflash.exeがあるところがCドライブ以外の時（下の例はDドライブの時）はさらに、
+</p>
+<p>
+D:
+</p>
+<p>
+と打ちます。そうしたら、
+</p>
+<p>
+nvflash.exe –protectoff
+</p>
+<p>
+nvflash.exe BIOSのファイル名
+</p>
+<p>
+と打ち、しばらく放置するとBIOS書き換えが完了します。
+</p>
+<p>
+<span style="color:red;">書き込みの間に電源を落としたり、コマンドプロンプトを閉じるときっと死にます。</span>
+</p>
+<p>
+ 
+</p>
+<p>
+PCを再起動します。
+</p>
+<p>
+起動に成功したら、今回のBIOS書き換えは成功です。
+</p>
+<p>
+FurMark等でエグい負荷をかけ、落ちないようなら大丈夫でしょう。
+</p>
+<p>
+ 
+</p>
+<p>
+BIOSの書き換えは気分的にもDOS上でやりたかったのですが、
+</p>
+<p>
+面倒くさくてやる気が出なかったのでWindowsからやりました。
+</p>
+<p>
+日本の自作erの中ではDOSからやるのが一般的なように感じます。
+</p>
+<p>
+ 
+</p>
+<p>
+さて、気が向いたらまた4700MHzまでCPUをオーバークロックしてFFベンチでもまわしましょうか。
+</p>
+<p>
+ではでは〜
+</p>
+<p>
+ 
+</p>
+<p>
+<span style="color:red;"><span style="font-size:24px;">追記（2013/3/19 (Tue) 18:6:29）</span></span>
+</p>
+<p>
+<img src="https://lh6.googleusercontent.com/-brgEI09a-2k/UUgqSnVbYLI/AAAAAAAABvc/i7C0MPBD5TE/s640/10096.png" />
+</p>
+<p>
+<span style="font-size:24px;">10096キタ———（゜∀゜）———— ！！</span>
+</p>
+<p>
+前回の4700MHZの時の設定から、さらにベースクロックを102MHzにして達成です。
+</p>
+<p>
+この様子だと電圧盛らずに100MHzx48いけるかな？
+</p>
+<p>
+ 
+</p>
+<p>
+グラボですが、僕の環境では一度落ちました。
+</p>
+<p>
+AfterBurnerでPowerLimitを上げることで回避できましたが。
+</p>
+<p>
+ 
+</p>
+<p>
+最終的に、ASUS GTX 660 Ti DirectCU II TOPと同じ、BoostClock1137MHzにしたBIOSを焼きました。
+</p>
+<p>
+ 
+</p></div></article><article><header class="post-header"><h1><a href="/entry/2013/03/18/entry/">また・・・</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2013/03/18 16:57</li><li><svg class="svg-inline--fa fa-tags" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg></li><li><ul class="tag-list"><li><a href="/entry/tags/diy-pc/"><span>DIY PC</span></a></li></ul></li></ul></header><div class="post-contents"><p>
+<img src="https://lh5.googleusercontent.com/-WABKgnE1kwI/UUbB0hF0u4I/AAAAAAAABsY/9Ng7F64u0aM/s640/IMG_0255.JPG" />
+</p>
+<p>
+<span style="font-size:36px;">またやられた</span>
+</p>
+<p>
+ 
+</p>
+<p>
+無線マウス、無線キーボードは本当に嫌いなのですが、
+</p>
+<p>
+今回ばかりは物凄く欲しくなりました。
+</p>
+<p>
+ 
+</p>
+<p>
+コネクタは破壊されなかっただけよかったとしましょう。
+</p>
+<p>
+コネクタ部分の位置を修正しつつ、適当に配線見なおししました。
+</p>
+<p>
+ 
+</p>
+<p>
+<img src="https://lh4.googleusercontent.com/-9ihNoj6C_F8/UUbBtKqtKTI/AAAAAAAABsQ/uaLpxmtmgZM/s640/IMG_0261.JPG" />
+</p>
+<p>
+問題のUSBポート周りには軽く接着剤を盛り、
+</p>
+<p>
+個人的に見栄えが微妙と感じたので、<a href="http://www5.pf-x.net/~tosainu/index.php/view/229" target="_blank" rel="nofollow noopener">前回</a>取り外したIEEE1394ポートを再び取り付けました。
+</p>
+<p>
+コネクタをただ付けただけなので機能はしませんが・・・
+</p>
+<p>
+ 
+</p>
+<p>
+配線ですが、ケーブルの長さが合わず裏で束ねていた部分（主にフロントIO関係）をケース上部と光学ドライブの間に詰め込み、
+</p>
+<p>
+裏面配線は出来る限り直線を意識してまとめてみたつもりです。
+</p>
+<p>
+<img src="https://lh3.googleusercontent.com/-iD_hiisKOPQ/UUbB5_zFfPI/AAAAAAAABsg/1R7cgzB8GNo/s640/IMG_0259.JPG" />
+</p>
+<p>
+もーちょっと配線の数を減らしたいんですけどね・・・
+</p>
+<p>
+そしてファン関係のケーブル類が特に見栄え悪すぎる。
+</p>
+<p>
+ 
+</p>
+<p>
+まぁ、見えない部分に凝る必要は全くわかりませんが（笑）
+</p>
+<p>
+ 
+</p>
+<p>
+そのかわりこちら側から見えるケーブル類はかなり減ったので、見栄え的にもエアフロー的にも良くなった気がします。
+</p>
+<p>
+<img src="https://lh6.googleusercontent.com/-LEYElhE584Q/UUbB7OzD6PI/AAAAAAAABso/Mc8c_QaaT5E/s640/IMG_0258.JPG" />
+</p>
+<p>
+ 
+</p>
+<p>
+ 
+</p>
+<p>
+最近、HDDのガリガリって音がケースどころか部屋に響いてます。
+</p>
+<p>
+安っぽいウーファーみたいな感じでしょうか。
+</p>
+<p>
+ 
+</p>
+<p>
+コルセアさんのケースは比較的安く、イマドキな設計（裏面配線とかガチ水冷組んで！！と言わんばかりの構造）なので印象も良かったのですが、
+</p>
+<p>
+ちょっと残念ですね。
+</p>
+<p>
+見ても分かると思いますが、最近のコルセアケースは3.5シャドウが弱々しいです。
+</p>
+<p>
+パーツ屋のケース売り場へ行くと、3.5シャドウ見るだけでコルセアかどうかがわかってしまうくらいになってしまいました。
+</p>
+<p>
+ 
+</p>
+<p>
+<a href="http://www.lian-li.com/v2/en/product/product02.php?cl_index=1" target="_blank" rel="nofollow noopener">Lian Li</a>とか<a href="http://www.silverstonetek.com/product_case.php?tno=7&amp;area=en" target="_blank" rel="nofollow noopener">SilverStone</a>とかのケースいいなぁ・・・とか思いながら、
+</p>
+<p>
+結局<a href="http://www.corsair.com/900d" target="_blank" rel="nofollow noopener">900D</a>も面白そうだなぁとか思ってしまうとさいぬでした。
+</p>
+<div class="video-container">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/_0Q7xF07_eg?rel=0" frameborder="0" allowfullscreen>
+</iframe>
+</div>
+<p>
+ 
+</p>
+<p>
+いつかスポンジ等で対処したいと思います。
+</p>
+<p>
+ではでは〜
+</p></div></article></div><nav class="nav list-nav"><div class="prev"><a href="/entry/2013/03/page/2/">« Previous</a></div><div class="counter">- 3 of 6 -</div><div class="next"><a href="/entry/2013/03/page/4/">Next »</a></div></nav></div></main><footer class="site-footer"><div class="footer-widgets"><div class="container"><div class="col"><section class="about-me"><h4><svg class="svg-inline--fa fa-user fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="user" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" fill="currentColor"></path></svg> About Me</h4><div class="about"><div class="avatar"><img src="/images/icon/cocoa.svg" class="icon" alt="avatar"></div><div class="info"><div class="name"><a href="https://myon.info" target="_blank" rel="nofollow noopener">Tosainu</a></div><div class="info">❤ Arch Linux, ごちうさ</div></div></div></section><section class="recent-posts"><h4><svg class="svg-inline--fa fa-file fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 384 512" data-icon="file" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z" fill="currentColor"></path></svg> Recent Posts</h4><ul><li><a href="/entry/2022/09/19/earthly-zynqmp/">とにかく複雑な Zynq のソフトウェアを Earthly でビルドする</a></li><li><a href="/entry/2020/11/29/archlinux-arm-on-zu/">Ultra96 で Arch Linux ARM を動かす</a></li><li><a href="/entry/2020/09/01/thinkpad-x13/">ThinkPad X13 を買いました</a></li><li><a href="/entry/2020/07/05/bus-blaster/">Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる</a></li><li><a href="/entry/2019/10/21/make-own-language-and-compiler/">Brainf**k からはじめる自作コンパイラ</a></li></ul></section></div><section class="tag-cloud"><h4><svg class="svg-inline--fa fa-tags fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg> Tags</h4><ul class="tag-list"><li><a href="/entry/tags/android/"><span>Android</span></a></li><li><a href="/entry/tags/arch-linux/"><span>Arch Linux</span></a></li><li><a href="/entry/tags/arduino/"><span>Arduino</span></a></li><li><a href="/entry/tags/c/"><span>C++</span></a></li><li><a href="/entry/tags/ctf/"><span>CTF</span></a></li><li><a href="/entry/tags/diy-pc/"><span>DIY PC</span></a></li><li><a href="/entry/tags/docker/"><span>Docker</span></a></li><li><a href="/entry/tags/fpga/"><span>FPGA</span></a></li><li><a href="/entry/tags/game/"><span>Game</span></a></li><li><a href="/entry/tags/gochiusa/"><span>Gochiusa</span></a></li><li><a href="/entry/tags/hakyll/"><span>Hakyll</span></a></li><li><a href="/entry/tags/haskell/"><span>Haskell</span></a></li><li><a href="/entry/tags/linux/"><span>Linux</span></a></li><li><a href="/entry/tags/machine-learning/"><span>Machine learning</span></a></li><li><a href="/entry/tags/network/"><span>Network</span></a></li><li><a href="/entry/tags/raspberry-pi/"><span>Raspberry Pi</span></a></li><li><a href="/entry/tags/rust/"><span>Rust</span></a></li><li><a href="/entry/tags/slack/"><span>Slack</span></a></li><li><a href="/entry/tags/thinkpad-x13/"><span>ThinkPad X13</span></a></li><li><a href="/entry/tags/vaio-z2/"><span>VAIO Z2</span></a></li><li><a href="/entry/tags/vim/"><span>Vim</span></a></li><li><a href="/entry/tags/walkmanz/"><span>WalkmanZ</span></a></li><li><a href="/entry/tags/website/"><span>Website</span></a></li><li><a href="/entry/tags/xperia-nx/"><span>Xperia NX</span></a></li><li><a href="/entry/tags/xperia-arc/"><span>Xperia arc</span></a></li><li><a href="/entry/tags/xperia2011/"><span>Xperia2011</span></a></li><li><a href="/entry/tags/seccamp/"><span>seccamp</span></a></li></ul></section><section class="archives"><h4><svg class="svg-inline--fa fa-box-archive fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="box-archive" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M32 32H480c17.7 0 32 14.3 32 32V96c0 17.7-14.3 32-32 32H32C14.3 128 0 113.7 0 96V64C0 46.3 14.3 32 32 32zm0 128H480V416c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V160zm128 80c0 8.8 7.2 16 16 16H336c8.8 0 16-7.2 16-16s-7.2-16-16-16H176c-8.8 0-16 7.2-16 16z" fill="currentColor"></path></svg> Archives</h4><ul class="archive-tree"><li><input class="tree-toggle" type="checkbox" id="tree-label-2022"><label class="tree-toggle-button" for="tree-label-2022"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2022/">2022 (1)</a></label><ul class="tree-child"><li><a href="/entry/2022/09/">2022/09 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2020"><label class="tree-toggle-button" for="tree-label-2020"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2020/">2020 (3)</a></label><ul class="tree-child"><li><a href="/entry/2020/11/">2020/11 (1)</a></li><li><a href="/entry/2020/09/">2020/09 (1)</a></li><li><a href="/entry/2020/07/">2020/07 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2019"><label class="tree-toggle-button" for="tree-label-2019"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2019/">2019 (4)</a></label><ul class="tree-child"><li><a href="/entry/2019/10/">2019/10 (1)</a></li><li><a href="/entry/2019/08/">2019/08 (2)</a></li><li><a href="/entry/2019/05/">2019/05 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2018"><label class="tree-toggle-button" for="tree-label-2018"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2018/">2018 (5)</a></label><ul class="tree-child"><li><a href="/entry/2018/10/">2018/10 (1)</a></li><li><a href="/entry/2018/09/">2018/09 (1)</a></li><li><a href="/entry/2018/08/">2018/08 (1)</a></li><li><a href="/entry/2018/03/">2018/03 (1)</a></li><li><a href="/entry/2018/01/">2018/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2017"><label class="tree-toggle-button" for="tree-label-2017"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2017/">2017 (5)</a></label><ul class="tree-child"><li><a href="/entry/2017/09/">2017/09 (1)</a></li><li><a href="/entry/2017/05/">2017/05 (1)</a></li><li><a href="/entry/2017/02/">2017/02 (3)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2016"><label class="tree-toggle-button" for="tree-label-2016"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2016/">2016 (8)</a></label><ul class="tree-child"><li><a href="/entry/2016/08/">2016/08 (2)</a></li><li><a href="/entry/2016/07/">2016/07 (1)</a></li><li><a href="/entry/2016/06/">2016/06 (1)</a></li><li><a href="/entry/2016/05/">2016/05 (1)</a></li><li><a href="/entry/2016/03/">2016/03 (1)</a></li><li><a href="/entry/2016/01/">2016/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2015"><label class="tree-toggle-button" for="tree-label-2015"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2015/">2015 (12)</a></label><ul class="tree-child"><li><a href="/entry/2015/12/">2015/12 (1)</a></li><li><a href="/entry/2015/08/">2015/08 (1)</a></li><li><a href="/entry/2015/06/">2015/06 (2)</a></li><li><a href="/entry/2015/05/">2015/05 (2)</a></li><li><a href="/entry/2015/04/">2015/04 (1)</a></li><li><a href="/entry/2015/03/">2015/03 (2)</a></li><li><a href="/entry/2015/02/">2015/02 (1)</a></li><li><a href="/entry/2015/01/">2015/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2014"><label class="tree-toggle-button" for="tree-label-2014"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2014/">2014 (62)</a></label><ul class="tree-child"><li><a href="/entry/2014/12/">2014/12 (7)</a></li><li><a href="/entry/2014/11/">2014/11 (4)</a></li><li><a href="/entry/2014/10/">2014/10 (3)</a></li><li><a href="/entry/2014/09/">2014/09 (3)</a></li><li><a href="/entry/2014/08/">2014/08 (5)</a></li><li><a href="/entry/2014/07/">2014/07 (6)</a></li><li><a href="/entry/2014/06/">2014/06 (6)</a></li><li><a href="/entry/2014/05/">2014/05 (4)</a></li><li><a href="/entry/2014/04/">2014/04 (6)</a></li><li><a href="/entry/2014/03/">2014/03 (7)</a></li><li><a href="/entry/2014/02/">2014/02 (5)</a></li><li><a href="/entry/2014/01/">2014/01 (6)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2013" checked><label class="tree-toggle-button" for="tree-label-2013"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2013/">2013 (116)</a></label><ul class="tree-child"><li><a href="/entry/2013/12/">2013/12 (8)</a></li><li><a href="/entry/2013/11/">2013/11 (6)</a></li><li><a href="/entry/2013/10/">2013/10 (5)</a></li><li><a href="/entry/2013/09/">2013/09 (5)</a></li><li><a href="/entry/2013/08/">2013/08 (4)</a></li><li><a href="/entry/2013/07/">2013/07 (3)</a></li><li><a href="/entry/2013/06/">2013/06 (12)</a></li><li><a href="/entry/2013/05/">2013/05 (16)</a></li><li><a href="/entry/2013/04/">2013/04 (16)</a></li><li><a href="/entry/2013/03/">2013/03 (27)</a></li><li><a href="/entry/2013/02/">2013/02 (7)</a></li><li><a href="/entry/2013/01/">2013/01 (7)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2012"><label class="tree-toggle-button" for="tree-label-2012"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2012/">2012 (11)</a></label><ul class="tree-child"><li><a href="/entry/2012/12/">2012/12 (3)</a></li><li><a href="/entry/2012/09/">2012/09 (1)</a></li><li><a href="/entry/2012/07/">2012/07 (4)</a></li><li><a href="/entry/2012/04/">2012/04 (1)</a></li><li><a href="/entry/2012/03/">2012/03 (1)</a></li><li><a href="/entry/2012/01/">2012/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2011"><label class="tree-toggle-button" for="tree-label-2011"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2011/">2011 (12)</a></label><ul class="tree-child"><li><a href="/entry/2011/09/">2011/09 (1)</a></li><li><a href="/entry/2011/06/">2011/06 (1)</a></li><li><a href="/entry/2011/05/">2011/05 (1)</a></li><li><a href="/entry/2011/03/">2011/03 (6)</a></li><li><a href="/entry/2011/02/">2011/02 (1)</a></li><li><a href="/entry/2011/01/">2011/01 (2)</a></li></ul></li></ul></section></div></div><div class="footer-bottom"><div class="container"><div class="copyright">© 2011-2022 Tosainu. Site generated by <a href="https://jaspervdj.be/hakyll/" target="_blank" rel="nofollow noopener">Hakyll</a>.</div></div></div></footer></body></html>

