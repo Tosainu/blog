@@ -10,7 +10,7 @@ jobs:
         with:
           submodules: true
 
-      - uses: haskell/actions/setup@6d103f80e473b25c79b2f5e78641d3abff710c96
+      - uses: haskell/actions/setup@afa2d2f6053b5f540030123023351fcf6b25a19c
         with:
           ghc-version: 9.0.2
           enable-stack: true
